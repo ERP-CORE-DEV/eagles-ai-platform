@@ -1,11 +1,19 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { SonaStore } from "../src/learning/sona-store.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { join } from "node:path";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { SonaLearningStore } from "@eagles-advanced/data-layer";
 
-describe("SonaStore", () => {
-  let store: SonaStore;
+describe("SonaStore (SQLite)", () => {
+  let store: SonaLearningStore;
 
   beforeEach(() => {
-    store = new SonaStore();
+    const testDir = mkdtempSync(join(tmpdir(), "sona-store-orch-test-"));
+    store = new SonaLearningStore(join(testDir, "learning.sqlite"));
+  });
+
+  afterEach(() => {
+    store.close();
   });
 
   it("store_createsPatternWithDefaultSuccessRate", () => {
@@ -58,7 +66,6 @@ describe("SonaStore", () => {
   it("recordOutcome_autoArchivesPoorPerformersAfterMinAttempts", () => {
     const pattern = store.store({ name: "Bad pattern", description: "Will fail" });
 
-    // Record 5 failures — after 5 attempts with all failures the rate will be very low
     let result = pattern;
     for (let i = 0; i < 5; i++) {
       const updated = store.recordOutcome(result.patternId, false);
@@ -66,14 +73,6 @@ describe("SonaStore", () => {
       result = updated!;
     }
 
-    // After 5 failures starting from 0.5:
-    // 0: 0.5
-    // 1: 0.3*0 + 0.7*0.5 = 0.35
-    // 2: 0.3*0 + 0.7*0.35 = 0.245
-    // 3: 0.3*0 + 0.7*0.245 = 0.1715
-    // 4: 0.3*0 + 0.7*0.1715 = 0.12005
-    // 5: 0.3*0 + 0.7*0.12005 = 0.084035
-    // All are below 0.2 and at 5 attempts — should be archived
     expect(result.successRate).toBeLessThan(0.2);
     expect(result.totalAttempts).toBe(5);
     expect(result.archived).toBe(true);
@@ -82,7 +81,6 @@ describe("SonaStore", () => {
   it("recordOutcome_doesNotArchiveBeforeMinAttempts", () => {
     const pattern = store.store({ name: "New pattern", description: "Not enough data" });
 
-    // Only 4 failures — under MIN_ATTEMPTS_FOR_PRUNE (5)
     let result = pattern;
     for (let i = 0; i < 4; i++) {
       const updated = store.recordOutcome(result.patternId, false);
@@ -101,9 +99,8 @@ describe("SonaStore", () => {
   it("suggest_returnsSortedBySuccessRateDescending", () => {
     const p1 = store.store({ name: "P1", description: "Pattern 1" });
     const p2 = store.store({ name: "P2", description: "Pattern 2" });
-    const p3 = store.store({ name: "P3", description: "Pattern 3" });
+    store.store({ name: "P3", description: "Pattern 3" });
 
-    // Give different success rates
     store.recordOutcome(p1.patternId, true);  // ~0.65
     store.recordOutcome(p2.patternId, false); // ~0.35
     // p3 stays at 0.5
@@ -113,7 +110,6 @@ describe("SonaStore", () => {
 
     expect(rates[0]).toBeGreaterThanOrEqual(rates[1]);
     expect(rates[1]).toBeGreaterThanOrEqual(rates[2]);
-    void p3; // suppress unused warning
   });
 
   it("suggest_filtersByTags", () => {
@@ -142,7 +138,6 @@ describe("SonaStore", () => {
   it("suggest_excludesArchivedPatterns", () => {
     const pattern = store.store({ name: "Archived", description: "Will be archived" });
 
-    // Archive it via repeated failures
     let result = pattern;
     for (let i = 0; i < 5; i++) {
       result = store.recordOutcome(result.patternId, false)!;
@@ -159,39 +154,22 @@ describe("SonaStore", () => {
     const good = store.store({ name: "Good", description: "High success" });
     const bad = store.store({ name: "Bad", description: "Low success" });
 
-    // Give good a high success rate
-    store.recordOutcome(good.patternId, true);
-    store.recordOutcome(good.patternId, true);
-    store.recordOutcome(good.patternId, true);
-    store.recordOutcome(good.patternId, true);
-    store.recordOutcome(good.patternId, true);
+    for (let i = 0; i < 5; i++) {
+      store.recordOutcome(good.patternId, true);
+    }
 
-    // Give bad a very low success rate (5 failures)
     for (let i = 0; i < 5; i++) {
       store.recordOutcome(bad.patternId, false);
     }
 
-    // Re-create bad as not-archived to test prune() manually
-    const freshStore = new SonaStore();
-    const badPattern = freshStore.store({ name: "Bad", description: "Low success" });
-    for (let i = 0; i < 5; i++) {
-      freshStore.recordOutcome(badPattern.patternId, false);
-    }
-
-    // The pattern should be auto-archived via recordOutcome already
-    expect(freshStore.get(badPattern.patternId)?.archived).toBe(true);
-
-    // prune() should return 0 since already archived
-    const pruned = freshStore.prune();
+    // Already auto-archived via recordOutcome, prune returns 0
+    expect(store.get(bad.patternId)?.archived).toBe(true);
+    const pruned = store.prune();
     expect(pruned).toBe(0);
-
-    void good; // suppress unused warning
-    void bad; // suppress unused warning
   });
 
   it("list_withIncludeArchivedTrue_returnsAllPatterns", () => {
     const p1 = store.store({ name: "P1", description: "Active" });
-    // Archive p1 via failures
     for (let i = 0; i < 5; i++) {
       store.recordOutcome(p1.patternId, false);
     }

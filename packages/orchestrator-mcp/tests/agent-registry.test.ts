@@ -1,11 +1,19 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { AgentRegistry } from "../src/agents/agent-registry.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { join } from "node:path";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { AgentRegistryStore } from "@eagles-advanced/data-layer";
 
-describe("AgentRegistry", () => {
-  let registry: AgentRegistry;
+describe("AgentRegistry (SQLite)", () => {
+  let registry: AgentRegistryStore;
 
   beforeEach(() => {
-    registry = new AgentRegistry();
+    const testDir = mkdtempSync(join(tmpdir(), "agent-registry-orch-test-"));
+    registry = new AgentRegistryStore(join(testDir, "agents.sqlite"));
+  });
+
+  afterEach(() => {
+    registry.close();
   });
 
   it("register_andGet_returnsRegisteredAgent", () => {
@@ -36,22 +44,16 @@ describe("AgentRegistry", () => {
       agentId: "agent-a",
       name: "Agent A",
       capabilities: ["analysis"],
-      tags: [],
-      metadata: {},
     });
     registry.register({
       agentId: "agent-b",
       name: "Agent B",
       capabilities: ["coding", "analysis"],
-      tags: [],
-      metadata: {},
     });
     registry.register({
       agentId: "agent-c",
       name: "Agent C",
       capabilities: ["testing"],
-      tags: [],
-      metadata: {},
     });
 
     const result = registry.findByCapability("analysis");
@@ -67,8 +69,6 @@ describe("AgentRegistry", () => {
       agentId: "agent-a",
       name: "Agent A",
       capabilities: ["coding"],
-      tags: [],
-      metadata: {},
     });
 
     const result = registry.findByCapability("deployment");
@@ -80,16 +80,12 @@ describe("AgentRegistry", () => {
     registry.register({
       agentId: "agent-1",
       name: "Frontend Agent",
-      capabilities: [],
       tags: ["frontend", "react"],
-      metadata: {},
     });
     registry.register({
       agentId: "agent-2",
       name: "Backend Agent",
-      capabilities: [],
       tags: ["backend"],
-      metadata: {},
     });
 
     const result = registry.findByTag("frontend");
@@ -102,16 +98,10 @@ describe("AgentRegistry", () => {
     registry.register({
       agentId: "agent-idle",
       name: "Idle Agent",
-      capabilities: [],
-      tags: [],
-      metadata: {},
     });
     registry.register({
       agentId: "agent-busy",
       name: "Busy Agent",
-      capabilities: [],
-      tags: [],
-      metadata: {},
     });
 
     registry.updateStatus("agent-busy", "busy");
@@ -129,9 +119,6 @@ describe("AgentRegistry", () => {
     registry.register({
       agentId: "agent-1",
       name: "Agent",
-      capabilities: [],
-      tags: [],
-      metadata: {},
     });
 
     registry.updateStatus("agent-1", "offline");
@@ -144,9 +131,6 @@ describe("AgentRegistry", () => {
     registry.register({
       agentId: "agent-hb",
       name: "Heartbeat Agent",
-      capabilities: [],
-      tags: [],
-      metadata: {},
     });
 
     const before = registry.get("agent-hb")!.lastHeartbeat;
@@ -165,8 +149,6 @@ describe("AgentRegistry", () => {
       agentId: "agent-remove",
       name: "Agent To Remove",
       capabilities: ["coding"],
-      tags: [],
-      metadata: {},
     });
 
     const removed = registry.unregister("agent-remove");
@@ -182,20 +164,8 @@ describe("AgentRegistry", () => {
   });
 
   it("list_returnsAllAgents", () => {
-    registry.register({
-      agentId: "agent-x",
-      name: "X",
-      capabilities: [],
-      tags: [],
-      metadata: {},
-    });
-    registry.register({
-      agentId: "agent-y",
-      name: "Y",
-      capabilities: [],
-      tags: [],
-      metadata: {},
-    });
+    registry.register({ agentId: "agent-x", name: "X" });
+    registry.register({ agentId: "agent-y", name: "Y" });
 
     const all = registry.list();
 
@@ -205,20 +175,8 @@ describe("AgentRegistry", () => {
   it("count_returnsNumberOfRegisteredAgents", () => {
     expect(registry.count()).toBe(0);
 
-    registry.register({
-      agentId: "a1",
-      name: "A1",
-      capabilities: [],
-      tags: [],
-      metadata: {},
-    });
-    registry.register({
-      agentId: "a2",
-      name: "A2",
-      capabilities: [],
-      tags: [],
-      metadata: {},
-    });
+    registry.register({ agentId: "a1", name: "A1" });
+    registry.register({ agentId: "a2", name: "A2" });
 
     expect(registry.count()).toBe(2);
   });

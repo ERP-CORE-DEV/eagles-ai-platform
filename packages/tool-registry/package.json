@@ -18,7 +18,9 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@eagles-advanced/data-layer": "workspace:*",
     "@eagles-advanced/shared-utils": "workspace:*",
+    "better-sqlite3": "^11.9.1",
     "zod": "^3.25.0"
   },
   "devDependencies": {

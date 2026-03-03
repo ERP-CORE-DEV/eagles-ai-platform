@@ -1,10 +1,34 @@
+import { ToolRegistryStore } from "@eagles-advanced/data-layer";
+import type { StoredTool } from "@eagles-advanced/data-layer";
 import type { ToolDefinition, ToolMetadata, RegisteredTool } from "./types.js";
 import { validateToolName } from "./validation.js";
 
+function toRegisteredTool(stored: StoredTool): RegisteredTool {
+  const definition: ToolDefinition = {
+    name: stored.name,
+    description: stored.description,
+    category: stored.category,
+    tags: stored.tags,
+    serverName: stored.serverName,
+    inputSchema: stored.inputSchema,
+    registeredAt: stored.registeredAt,
+  };
+
+  const metadata: ToolMetadata = {
+    callCount: stored.callCount,
+    avgLatencyMs: stored.avgLatencyMs,
+    lastCalledAt: stored.lastCalledAt,
+  };
+
+  return { definition, metadata };
+}
+
 export class ToolRegistry {
-  private readonly _tools: Map<string, RegisteredTool> = new Map();
-  private readonly _byCategory: Map<string, Set<string>> = new Map();
-  private readonly _byTag: Map<string, Set<string>> = new Map();
+  private readonly store: ToolRegistryStore;
+
+  constructor(dbPath: string) {
+    this.store = new ToolRegistryStore(dbPath);
+  }
 
   register(definition: Omit<ToolDefinition, "registeredAt">): RegisteredTool {
     const validation = validateToolName(definition.name);
@@ -12,123 +36,49 @@ export class ToolRegistry {
       throw new Error(`Invalid tool name "${definition.name}": ${validation.error}`);
     }
 
-    const fullDefinition: ToolDefinition = {
-      ...definition,
-      registeredAt: new Date().toISOString(),
-    };
+    const stored = this.store.register({
+      name: definition.name,
+      description: definition.description,
+      category: definition.category,
+      tags: definition.tags,
+      serverName: definition.serverName,
+      inputSchema: definition.inputSchema,
+    });
 
-    const metadata: ToolMetadata = {
-      callCount: 0,
-      avgLatencyMs: 0,
-      lastCalledAt: null,
-    };
-
-    const registered: RegisteredTool = { definition: fullDefinition, metadata };
-    this._tools.set(definition.name, registered);
-    this._indexByCategory(definition.name, definition.category);
-    for (const tag of definition.tags) {
-      this._indexByTag(definition.name, tag);
-    }
-
-    return registered;
+    return toRegisteredTool(stored);
   }
 
   get(name: string): RegisteredTool | null {
-    return this._tools.get(name) ?? null;
+    const stored = this.store.get(name);
+    if (stored === null) return null;
+    return toRegisteredTool(stored);
   }
 
   findByCategory(category: string): RegisteredTool[] {
-    const names = this._byCategory.get(category);
-    if (names === undefined) return [];
-    return this._resolveNames(names);
+    return this.store.findByCategory(category).map(toRegisteredTool);
   }
 
   findByTag(tag: string): RegisteredTool[] {
-    const names = this._byTag.get(tag);
-    if (names === undefined) return [];
-    return this._resolveNames(names);
+    return this.store.findByTag(tag).map(toRegisteredTool);
   }
 
   recordCall(name: string, latencyMs: number): void {
-    const existing = this._tools.get(name);
-    if (existing === undefined) return;
-
-    const { callCount, avgLatencyMs } = existing.metadata;
-    const newCallCount = callCount + 1;
-    const newAvgLatencyMs = avgLatencyMs + (latencyMs - avgLatencyMs) / newCallCount;
-
-    const updatedMetadata: ToolMetadata = {
-      callCount: newCallCount,
-      avgLatencyMs: newAvgLatencyMs,
-      lastCalledAt: new Date().toISOString(),
-    };
-
-    this._tools.set(name, { definition: existing.definition, metadata: updatedMetadata });
+    this.store.recordCall(name, latencyMs);
   }
 
   list(): RegisteredTool[] {
-    return Array.from(this._tools.values());
+    return this.store.list().map(toRegisteredTool);
   }
 
   unregister(name: string): boolean {
-    const existing = this._tools.get(name);
-    if (existing === undefined) return false;
-
-    this._tools.delete(name);
-    this._removeFromCategoryIndex(name, existing.definition.category);
-    for (const tag of existing.definition.tags) {
-      this._removeFromTagIndex(name, tag);
-    }
-
-    return true;
+    return this.store.unregister(name);
   }
 
   count(): number {
-    return this._tools.size;
+    return this.store.count();
   }
 
-  private _indexByCategory(name: string, category: string): void {
-    const existing = this._byCategory.get(category);
-    if (existing === undefined) {
-      this._byCategory.set(category, new Set([name]));
-    } else {
-      existing.add(name);
-    }
-  }
-
-  private _indexByTag(name: string, tag: string): void {
-    const existing = this._byTag.get(tag);
-    if (existing === undefined) {
-      this._byTag.set(tag, new Set([name]));
-    } else {
-      existing.add(name);
-    }
-  }
-
-  private _removeFromCategoryIndex(name: string, category: string): void {
-    const names = this._byCategory.get(category);
-    if (names === undefined) return;
-    names.delete(name);
-    if (names.size === 0) {
-      this._byCategory.delete(category);
-    }
-  }
-
-  private _removeFromTagIndex(name: string, tag: string): void {
-    const names = this._byTag.get(tag);
-    if (names === undefined) return;
-    names.delete(name);
-    if (names.size === 0) {
-      this._byTag.delete(tag);
-    }
-  }
-
-  private _resolveNames(names: Set<string>): RegisteredTool[] {
-    const result: RegisteredTool[] = [];
-    for (const name of names) {
-      const tool = this._tools.get(name);
-      if (tool !== undefined) result.push(tool);
-    }
-    return result;
+  close(): void {
+    this.store.close();
   }
 }

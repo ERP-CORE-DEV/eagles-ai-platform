@@ -1,4 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { join } from "node:path";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { ToolRegistry } from "../src/registry.js";
 import type { RegisteredTool } from "../src/types.js";
 
@@ -11,11 +14,16 @@ const SAMPLE_DEFINITION = {
   inputSchema: { query: { type: "string" }, limit: { type: "number" } },
 } as const;
 
-describe("ToolRegistry", () => {
+describe("ToolRegistry (SQLite)", () => {
   let registry: ToolRegistry;
 
   beforeEach(() => {
-    registry = new ToolRegistry();
+    const testDir = mkdtempSync(join(tmpdir(), "tool-registry-test-"));
+    registry = new ToolRegistry(join(testDir, "tools.sqlite"));
+  });
+
+  afterEach(() => {
+    registry.close();
   });
 
   describe("register", () => {

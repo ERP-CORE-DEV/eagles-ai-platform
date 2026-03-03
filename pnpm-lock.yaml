@@ -119,6 +119,9 @@ importers:
 
   packages/orchestrator-mcp:
     dependencies:
+      '@eagles-advanced/data-layer':
+        specifier: workspace:*
+        version: link:../data-layer
       '@eagles-advanced/shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
@@ -224,9 +227,15 @@ importers:
 
   packages/tool-registry:
     dependencies:
+      '@eagles-advanced/data-layer':
+        specifier: workspace:*
+        version: link:../data-layer
       '@eagles-advanced/shared-utils':
         specifier: workspace:*
         version: link:../shared-utils
+      better-sqlite3:
+        specifier: ^11.9.1
+        version: 11.10.0
       zod:
         specifier: ^3.25.0
         version: 3.25.76

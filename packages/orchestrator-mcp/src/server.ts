@@ -1,15 +1,19 @@
+import { join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { AgentRegistry } from "./agents/agent-registry.js";
+import { AgentRegistryStore } from "@eagles-advanced/data-layer";
+import { TaskStore } from "@eagles-advanced/data-layer";
+import { SonaLearningStore } from "@eagles-advanced/data-layer";
 import { computeHealth } from "./agents/lifecycle.js";
-import { TaskEngine } from "./tasks/task-engine.js";
 import { findBestAgent } from "./tasks/coordination.js";
-import { SonaStore } from "./learning/sona-store.js";
+import type { AgentInfo } from "./agents/types.js";
+import type { TaskDefinition } from "./tasks/types.js";
 
-export function createOrchestratorServer(): McpServer {
-  const registry = new AgentRegistry();
-  const engine = new TaskEngine();
-  const sona = new SonaStore();
+export function createOrchestratorServer(dbDir?: string): McpServer {
+  const dir = dbDir ?? process.env["EAGLES_DATA_ROOT"] ?? join(process.cwd(), ".eagles-data");
+  const registry = new AgentRegistryStore(join(dir, "agents.sqlite"));
+  const engine = new TaskStore(join(dir, "tasks.sqlite"));
+  const sona = new SonaLearningStore(join(dir, "learning.sqlite"));
   const server = new McpServer({ name: "orchestrator-mcp", version: "0.1.0" });
 
   // -------------------------------------------------------------------------
@@ -111,7 +115,7 @@ export function createOrchestratorServer(): McpServer {
         };
       }
 
-      const health = computeHealth(agent);
+      const health = computeHealth(agent as AgentInfo);
 
       return {
         content: [{
@@ -220,7 +224,7 @@ export function createOrchestratorServer(): McpServer {
         };
       }
 
-      const bestAgent = findBestAgent(task, registry.list());
+      const bestAgent = findBestAgent(task as TaskDefinition, registry.list() as unknown as AgentInfo[]);
 
       if (bestAgent === null) {
         return {
