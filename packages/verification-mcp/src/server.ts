@@ -99,6 +99,10 @@ export function createVerificationServer(dbPath?: string): McpServer {
       name: z.string(),
       stateJson: z.string(),
       agentScore: z.number().min(0).max(1).optional(),
+      waveNumber: z.number().int().optional(),
+      buildStatus: z.string().optional(),
+      testStatus: z.string().optional(),
+      commitSha: z.string().optional(),
     },
     async (params) => {
       const checkpoint = checkpointManager.create({
@@ -106,6 +110,10 @@ export function createVerificationServer(dbPath?: string): McpServer {
         name: params.name,
         stateJson: params.stateJson,
         agentScore: params.agentScore,
+        waveNumber: params.waveNumber,
+        buildStatus: params.buildStatus,
+        testStatus: params.testStatus,
+        commitSha: params.commitSha,
       });
 
       return {
@@ -117,6 +125,10 @@ export function createVerificationServer(dbPath?: string): McpServer {
             name: checkpoint.name,
             agentScore: checkpoint.agentScore,
             verified: checkpoint.verified,
+            waveNumber: checkpoint.waveNumber,
+            buildStatus: checkpoint.buildStatus,
+            testStatus: checkpoint.testStatus,
+            commitSha: checkpoint.commitSha,
             createdAt: checkpoint.createdAt,
           }),
         }],
@@ -278,6 +290,172 @@ export function createVerificationServer(dbPath?: string): McpServer {
             },
             autoCheckpointCreated: autoCheckpoint !== null,
             checkpointId: autoCheckpoint?.checkpointId ?? null,
+          }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // verify_checkpoint_findings
+  // -------------------------------------------------------------------------
+  server.tool(
+    "verify_checkpoint_findings",
+    {
+      action: z.enum(["add", "list", "resolve"]),
+      checkpointId: z.string(),
+      severity: z.enum(["P0", "P1", "P2", "P3"]).optional(),
+      file: z.string().optional(),
+      line: z.number().int().optional(),
+      description: z.string().optional(),
+      blocker: z.boolean().optional(),
+      findingId: z.string().optional(),
+      fixCommit: z.string().optional(),
+    },
+    async (params) => {
+      if (params.action === "add") {
+        if (!params.severity || !params.file || !params.description) {
+          return {
+            content: [{
+              type: "text" as const,
+              text: JSON.stringify({ error: "severity, file, and description are required for 'add'" }),
+            }],
+          };
+        }
+        const finding = checkpointManager.addFinding({
+          checkpointId: params.checkpointId,
+          severity: params.severity,
+          file: params.file,
+          line: params.line,
+          description: params.description,
+          blocker: params.blocker,
+        });
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify(finding),
+          }],
+        };
+      }
+
+      if (params.action === "resolve") {
+        if (!params.findingId || !params.fixCommit) {
+          return {
+            content: [{
+              type: "text" as const,
+              text: JSON.stringify({ error: "findingId and fixCommit are required for 'resolve'" }),
+            }],
+          };
+        }
+        checkpointManager.resolveFinding(params.findingId, params.fixCommit);
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ resolved: true, findingId: params.findingId, fixCommit: params.fixCommit }),
+          }],
+        };
+      }
+
+      // action === "list"
+      const findings = checkpointManager.getFindings(params.checkpointId);
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            checkpointId: params.checkpointId,
+            findings,
+            total: findings.length,
+            blockers: findings.filter((f) => f.blocker).length,
+            unresolved: findings.filter((f) => !f.resolved).length,
+          }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // verify_receipt_write
+  // -------------------------------------------------------------------------
+  server.tool(
+    "verify_receipt_write",
+    {
+      sessionId: z.string(),
+      agentName: z.string(),
+      waveNumber: z.number().int(),
+      output: z.string(),
+      evidence: z.record(z.unknown()).optional(),
+    },
+    async (params) => {
+      const receipt = checkpointManager.writeReceipt({
+        sessionId: params.sessionId,
+        agentName: params.agentName,
+        waveNumber: params.waveNumber,
+        output: params.output,
+        evidence: params.evidence,
+      });
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify(receipt),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // verify_receipt_list
+  // -------------------------------------------------------------------------
+  server.tool(
+    "verify_receipt_list",
+    {
+      sessionId: z.string(),
+      waveNumber: z.number().int().optional(),
+    },
+    async (params) => {
+      const receipts = checkpointManager.listReceipts(params.sessionId, params.waveNumber);
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            sessionId: params.sessionId,
+            waveNumber: params.waveNumber ?? null,
+            receipts,
+            total: receipts.length,
+          }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // verify_receipt_chain
+  // -------------------------------------------------------------------------
+  server.tool(
+    "verify_receipt_chain",
+    {
+      sessionId: z.string(),
+      expectedAgents: z.array(z.string()),
+      waveNumber: z.number().int(),
+    },
+    async (params) => {
+      const result = checkpointManager.verifyReceiptChain(
+        params.sessionId,
+        params.expectedAgents,
+        params.waveNumber,
+      );
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            sessionId: params.sessionId,
+            waveNumber: params.waveNumber,
+            complete: result.complete,
+            missing: result.missing,
+            receipts: result.receipts,
+            total: result.receipts.length,
           }),
         }],
       };
