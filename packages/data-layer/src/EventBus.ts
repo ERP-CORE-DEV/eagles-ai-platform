@@ -124,6 +124,33 @@ export class EventBus {
     return candidates.filter((e) => predicate(e.payload)).slice(0, limit);
   }
 
+  /**
+   * Deduplicate events by extracting a key from payloads.
+   * Returns only unique events (first occurrence wins).
+   * Ported from Classic's message-bus dedup (key = file+line+description).
+   */
+  deduplicateByKey<T>(
+    topic: EventTopic,
+    afterId: string | null,
+    keyFn: (payload: T) => string,
+    limit: number = 100,
+  ): BusEvent<T>[] {
+    const candidates = this.consume<T>(topic, afterId, limit * 3);
+    const seen = new Set<string>();
+    const result: BusEvent<T>[] = [];
+
+    for (const event of candidates) {
+      const key = keyFn(event.payload);
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(event);
+        if (result.length >= limit) break;
+      }
+    }
+
+    return result;
+  }
+
   cleanOlderThan(days: number): number {
     const cutoff = new Date(Date.now() - days * 86400000).toISOString();
     const result = this.db.prepare(

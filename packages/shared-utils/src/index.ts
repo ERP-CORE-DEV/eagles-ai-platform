@@ -3,5 +3,6 @@ export type { DriftFinding, AlertLevel, OverallHealth, DriftTrend } from "./type
 export { MEMORY_TAGS } from "./types/VectorEntry.js";
 export type { VectorEntry, MemoryTag, VectorSearchResult } from "./types/VectorEntry.js";
 export type { McpToolResult } from "./types/McpToolResult.js";
+export type { FindingSeverity, WaveStatus, WaveCheckpoint, AgentReceipt, BusMessage, WaveSummary } from "./types/Orchestration.js";
 export { MODEL_PRICING, BUDGET_THRESHOLDS, CACHE_DISCOUNT } from "./constants/ModelPricing.js";
 export type { KnownModelName } from "./constants/ModelPricing.js";

@@ -145,6 +145,64 @@ describe("EventBus", () => {
     });
   });
 
+  describe("deduplicateByKey", () => {
+    it("should deduplicate events by key function (first occurrence wins)", () => {
+      bus.publish("drift.detected", { file: "a.ts", line: 10, description: "Missing null check" });
+      bus.publish("drift.detected", { file: "b.ts", line: 20, description: "Unused import" });
+      bus.publish("drift.detected", { file: "a.ts", line: 10, description: "Missing null check" }); // duplicate
+      bus.publish("drift.detected", { file: "c.ts", line: 5, description: "Type error" });
+
+      type Finding = { file: string; line: number; description: string };
+      const deduped = bus.deduplicateByKey<Finding>(
+        "drift.detected",
+        null,
+        (p) => `${p.file}:${p.line}:${p.description}`,
+      );
+
+      expect(deduped).toHaveLength(3);
+      expect(deduped[0].payload.file).toBe("a.ts");
+      expect(deduped[1].payload.file).toBe("b.ts");
+      expect(deduped[2].payload.file).toBe("c.ts");
+    });
+
+    it("should return all events when no duplicates exist", () => {
+      bus.publish("token.recorded", { model: "opus", cost: 0.01 });
+      bus.publish("token.recorded", { model: "sonnet", cost: 0.005 });
+
+      const deduped = bus.deduplicateByKey<{ model: string; cost: number }>(
+        "token.recorded",
+        null,
+        (p) => p.model,
+      );
+
+      expect(deduped).toHaveLength(2);
+    });
+
+    it("should respect limit after dedup", () => {
+      for (let i = 0; i < 10; i++) {
+        bus.publish("drift.detected", { id: i % 5 }); // 5 unique, each duplicated once
+      }
+
+      const deduped = bus.deduplicateByKey<{ id: number }>(
+        "drift.detected",
+        null,
+        (p) => String(p.id),
+        3,
+      );
+
+      expect(deduped).toHaveLength(3);
+    });
+
+    it("should return empty array when no events match topic", () => {
+      const deduped = bus.deduplicateByKey(
+        "budget.alert",
+        null,
+        () => "key",
+      );
+      expect(deduped).toEqual([]);
+    });
+  });
+
   describe("maxEvents", () => {
     it("should enforce max events cap when triggered manually", () => {
       const testDir = mkdtempSync(join(tmpdir(), "eventbus-max-test-"));
