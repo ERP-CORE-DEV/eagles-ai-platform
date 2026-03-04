@@ -2,7 +2,7 @@
   "name": "eagles-ai-platform",
   "version": "0.1.0",
   "private": true,
-  "description": "EAGLES Advanced — token tracking, vector memory, and drift detection MCPs",
+  "description": "EAGLES AI Platform — 7 MCP servers, 52 tools, 62 skills for Claude Code",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
@@ -25,11 +25,15 @@
     "clean": "pnpm -r run clean",
     "setup": "bash scripts/setup.sh",
     "benchmark": "pnpm --filter @eagles-ai-platform/benchmark run start",
-    "smoke-test": "bash scripts/smoke-test.sh"
+    "smoke-test": "bash scripts/smoke-test.sh",
+    "docs:dev": "vitepress dev packages/docs",
+    "docs:build": "vitepress build packages/docs",
+    "docs:preview": "vitepress preview packages/docs"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.0",
     "typescript": "^5.5.0",
+    "vitepress": "^1.6.4",
     "vitest": "^2.1.0"
   }
 }
