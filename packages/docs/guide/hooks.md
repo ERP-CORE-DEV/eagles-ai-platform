@@ -6,14 +6,16 @@ Claude Code hooks extend the platform by intercepting tool calls before and afte
 
 | Hook | Event | Purpose |
 |------|-------|---------|
-| `cost-router.py` | PreToolUse (Agent) | Routes subagents to optimal model tier |
+| `cost-router.py` | PreToolUse (Agent) | **Forces** subagents to optimal model tier |
 | `token-tracker-hook.py` | PostToolUse (all tools) | Records every tool call to SQLite |
+| `skill-extractor.py` | Stop (session end) | Auto-extracts tool patterns to SonaLearningStore |
+| `rate-limit-detector.py` | PostToolUse (Agent, Bash, Web, MCP) | Detects rate limits and warns |
 
 ## cost-router.py
 
 **Event**: `PreToolUse` (Agent tool only)
 **Location**: `~/.claude/hooks/cost-router.py`
-**Effect**: Prints model recommendation as `additionalContext`
+**Effect**: **Forces** model selection via `hookSpecificOutput.updatedInput` (merged, not replaced)
 
 ### Model Routing Table
 
@@ -169,3 +171,52 @@ Columns:
   agent_name          TEXT
   tool_name           TEXT
 ```
+
+## skill-extractor.py
+
+**Event**: `Stop` (session end)
+**Location**: `~/.claude/hooks/skill-extractor.py`
+**Effect**: Auto-extracts tool patterns from session transcript into SonaLearningStore
+
+### What It Learns
+
+| Pattern Type | Example | Tags |
+|-------------|---------|------|
+| **Tool sequences** | `Grep -> Read -> Edit` (3x) | `sequence`, `auto` |
+| **Agent combos** | `agents:Explore+code-reviewer` | `combo`, `auto` |
+| **Session profiles** | `profile:Read+Edit+Bash` | `profile`, `auto` |
+
+### How It Works
+
+1. Receives `transcript_path` from Stop hook stdin (JSONL file)
+2. Parses all tool calls from the session
+3. Extracts recurring n-gram sequences (2-4 tools)
+4. Records agent combinations used together
+5. Writes patterns to `$EAGLES_DATA_ROOT/orchestrator/orchestrator.sqlite`
+6. Uses EMA scoring (alpha=0.3) — successful sessions boost pattern score
+
+Patterns are available via the orchestrator MCP's `learn_suggest` tool.
+
+::: info
+Patterns auto-archive when their success rate drops below 20% after 5+ attempts (EMA pruning).
+:::
+
+## rate-limit-detector.py
+
+**Event**: `PostToolUse` (Agent, Bash, WebFetch, WebSearch, MCP tools)
+**Location**: `~/.claude/hooks/rate-limit-detector.py`
+**Effect**: Detects rate limit responses and warns with advisory message
+
+### Detection Signals
+
+Scans tool results for: `rate_limit`, `too many requests`, `429`, `throttled`, `quota exceeded`, `capacity`, `overloaded`
+
+### Behavior
+
+1. **Detected**: Logs `RATE_LIMIT` event to token-tracker SQLite, writes state file, prints warning
+2. **Not detected**: Clears stale state file after 120s recovery window
+3. **Non-blocking**: Uses exit code 1 (warning only, never blocks execution)
+
+### State File
+
+`~/.claude/.rate-limit-state` — JSON with last rate limit timestamp. Enables cross-session awareness (new session can check if recently rate-limited).

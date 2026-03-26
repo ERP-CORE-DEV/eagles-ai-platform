@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """EAGLES Cost Router — PreToolUse hook for Agent tool calls.
 
-Prints model routing recommendation as additionalContext.
-Claude Code reads this and should apply the model parameter.
+FORCES model routing via hookSpecificOutput.updatedInput (merged, not replaced).
+Previous advisory-only approach was ineffective — Claude ignored recommendations.
 
-Cannot use updatedInput (breaks Agent tool's subagent_type).
-Instead uses additionalContext to instruct Claude which model to use.
+Key fix: output the FULL tool_input with model field added/overridden.
+This preserves subagent_type, prompt, description, and all other fields.
 
 Tiers:
   haiku  — Explore, search, quick lookups (60x cheaper than opus)
@@ -72,7 +72,14 @@ def main():
         savings = '5x cheaper'
 
     if target_model:
-        print(f'[cost-router] @{subagent_type} should use model:{target_model} ({savings} than opus)')
+        # FORCE model by merging into full tool_input (preserves all other fields)
+        merged_input = {**tool_input, 'model': target_model}
+        hook_output = {
+            "hookSpecificOutput": {
+                "updatedInput": merged_input
+            }
+        }
+        print(json.dumps(hook_output))
 
     sys.exit(0)
 
