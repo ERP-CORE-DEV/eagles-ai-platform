@@ -63,19 +63,38 @@ if (fs.existsSync(EAGLES_ROOT)) {
     fs.mkdirSync(path.join(EAGLES_ROOT, '.data', dir), { recursive: true });
   }
 
+  // Pull latest
+  console.log('  Pulling latest...');
+  run('git fetch origin main && git reset --hard origin/main', { cwd: EAGLES_ROOT });
+
   console.log('  Installing dependencies...');
-  run('pnpm install', { cwd: EAGLES_ROOT });
+  const installOut = run('pnpm install', { cwd: EAGLES_ROOT });
+  if (installOut === null) {
+    console.log('  WARN — pnpm install failed. Trying npm...');
+    run('npm install', { cwd: EAGLES_ROOT });
+  }
 
   console.log('  Building packages...');
   const buildResult = run('pnpm run build:ordered', { cwd: EAGLES_ROOT });
   if (buildResult !== null) {
-    console.log('  OK — all packages built\n');
+    console.log('  OK — all packages built');
   } else {
-    console.log('  WARN — build had issues, continuing anyway\n');
+    console.log('  WARN — pnpm build failed. Trying npm...');
+    run('npm run build:ordered', { cwd: EAGLES_ROOT });
   }
+
+  // Verify builds
+  let builtCount = 0;
+  for (const pkg of ['token-tracker-mcp', 'provider-router-mcp', 'vector-memory-mcp', 'drift-detector-mcp', 'verification-mcp', 'orchestrator-mcp']) {
+    const dist = path.join(EAGLES_ROOT, 'packages', pkg, 'dist', 'index.js');
+    if (fs.existsSync(dist)) builtCount++;
+    else console.log(`  MISSING: ${pkg}/dist/index.js`);
+  }
+  console.log(`  ${builtCount}/6 EAGLES packages built\n`);
 } else {
   console.log(`  SKIP — ${EAGLES_ROOT} not found`);
-  console.log('  Clone it: git clone https://github.com/ERP-CORE-DEV/eagles-ai-platform.git C:/RH-OptimERP/eagles-ai-platform\n');
+  console.log('  Run: git clone https://github.com/ERP-CORE-DEV/eagles-ai-platform.git C:/RH-OptimERP/eagles-ai-platform');
+  console.log('  Then re-run: node scripts/heal.js\n');
 }
 
 // --- Step 4: Build RH-OptimERP MCPs ---
@@ -97,20 +116,21 @@ for (const mcp of mcpsToBuild) {
 }
 console.log('');
 
-// --- Step 5: Pre-install npx packages (prevent timeout on first run) ---
-console.log('[5/7] Pre-installing npx MCP packages...');
-const npxPackages = [
+// --- Step 5: Globally install MCP packages (npx is unreliable on Windows) ---
+console.log('[5/7] Installing MCP packages globally...');
+const npmPackages = [
   '@modelcontextprotocol/server-filesystem',
   '@modelcontextprotocol/server-github',
   '@upstash/context7-mcp',
-  'chrome-devtools-mcp@latest'
+  'chrome-devtools-mcp'
 ];
-for (const pkg of npxPackages) {
-  const shortName = pkg.split('/').pop().split('@')[0];
-  console.log(`  ${shortName}...`);
-  run(`npx -y ${pkg} --help`, { timeout: 60000 });
+console.log(`  npm install -g ${npmPackages.join(' ')}...`);
+const installResult = run(`npm install -g ${npmPackages.join(' ')}`, { timeout: 120000 });
+if (installResult !== null) {
+  console.log('  OK\n');
+} else {
+  console.log('  WARN — some packages may have failed to install\n');
 }
-console.log('  OK\n');
 
 // --- Step 6: Register ALL MCPs in ~/.claude.json ---
 console.log('[6/7] Registering MCP servers in ~/.claude.json...');
