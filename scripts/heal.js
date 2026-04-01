@@ -68,19 +68,12 @@ try {
 }
 
 // ============================================================
-// Step 2: Windows Build Tools (for better-sqlite3, hnswlib-node)
+// Step 2: Ensure C++ build tools + native deps
 // ============================================================
-console.log('[2/9] Checking C++ build tools (needed for better-sqlite3)...');
-const hasNodeGyp = run('node-gyp --version');
-if (hasNodeGyp) {
-  console.log(`  node-gyp: ${hasNodeGyp}`);
-} else {
-  console.log('  Installing node-gyp...');
-  run('npm install -g node-gyp');
-}
-
-// Check if native compilation works by testing for better-sqlite3
+console.log('[2/9] Checking C++ build tools and native dependencies...');
 let nativeOk = false;
+
+// Check if better-sqlite3 already works
 try {
   execSync('node -e "require(\'better-sqlite3\')"', {
     cwd: EAGLES_ROOT,
@@ -88,10 +81,62 @@ try {
     stdio: ['pipe', 'pipe', 'pipe']
   });
   nativeOk = true;
-  console.log('  better-sqlite3: OK\n');
+  console.log('  better-sqlite3: OK');
 } catch {
-  console.log('  better-sqlite3: needs rebuild (will fix in Step 5)\n');
+  console.log('  better-sqlite3: not working');
 }
+
+// Check if cl.exe (MSVC compiler) is available
+const hasCl = run('where.exe cl') || run('cmd /c "where cl"');
+if (hasCl) {
+  console.log('  C++ compiler: found');
+} else {
+  console.log('  C++ compiler: NOT FOUND — installing Visual Studio Build Tools...');
+
+  // Try winget first
+  const wingetResult = run('winget install Microsoft.VisualStudio.2022.BuildTools --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --wait" --accept-package-agreements --accept-source-agreements', { timeout: 600000 });
+  if (wingetResult !== null) {
+    console.log('  Visual Studio Build Tools installed via winget');
+  } else {
+    // Try modifying existing install
+    const vsInstallerPaths = [
+      process.env['ProgramFiles(x86)'] + '\\Microsoft Visual Studio\\Installer\\vs_installer.exe',
+      'C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vs_installer.exe'
+    ];
+    let installed = false;
+    for (const vsi of vsInstallerPaths) {
+      if (fs.existsSync(vsi)) {
+        console.log('  Found VS Installer, adding C++ workload...');
+        run(`"${vsi}" modify --installPath "${process.env['ProgramFiles(x86)']}\\Microsoft Visual Studio\\2022\\BuildTools" --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --wait`, { timeout: 600000 });
+        installed = true;
+        break;
+      }
+    }
+
+    // Last resort: use the already-downloaded vs_BuildTools.exe
+    if (!installed) {
+      const homeDirs = [os.homedir()];
+      for (const home of homeDirs) {
+        const exe = path.join(home, '.windows-build-tools', 'vs_BuildTools.exe');
+        if (fs.existsSync(exe)) {
+          console.log(`  Running ${exe} with C++ workload...`);
+          run(`"${exe}" --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive --wait`, { timeout: 600000 });
+          installed = true;
+          break;
+        }
+      }
+    }
+
+    if (!installed) {
+      console.log('  WARN — could not auto-install. Manual install needed:');
+      console.log('    1. Download: https://visualstudio.microsoft.com/visual-cpp-build-tools/');
+      console.log('    2. Select "Desktop development with C++"');
+      console.log('    3. Re-run: node scripts/heal.js');
+      errors.push('C++ build tools not installed');
+    }
+  }
+}
+console.log('');
 
 // ============================================================
 // Step 3: pnpm
@@ -133,7 +178,7 @@ if (fs.existsSync(path.join(MCPS_ROOT, 'team-sync'))) {
 console.log('  OK\n');
 
 // ============================================================
-// Step 5: Build EAGLES AI Platform + rebuild native deps
+// Step 5: Build EAGLES AI Platform + fix native deps
 // ============================================================
 console.log('[5/9] Building EAGLES AI Platform...');
 if (fs.existsSync(EAGLES_ROOT)) {
@@ -145,22 +190,52 @@ if (fs.existsSync(EAGLES_ROOT)) {
   console.log('  pnpm install...');
   runVerbose('pnpm install', 'pnpm install', { cwd: EAGLES_ROOT });
 
-  // Force rebuild native deps if broken
+  // Fix native deps if broken
   if (!nativeOk) {
-    console.log('  Rebuilding native dependencies (better-sqlite3, hnswlib-node)...');
-    runVerbose('pnpm rebuild better-sqlite3', 'rebuild better-sqlite3', { cwd: EAGLES_ROOT });
-    run('pnpm rebuild hnswlib-node', { cwd: EAGLES_ROOT }); // optional, may not be installed
+    // Strategy 1: pnpm rebuild (works if C++ tools were just installed)
+    console.log('  Rebuilding native deps...');
+    run('pnpm rebuild better-sqlite3', { cwd: EAGLES_ROOT });
+    run('pnpm rebuild hnswlib-node', { cwd: EAGLES_ROOT });
 
-    // Verify
     try {
       execSync('node -e "require(\'better-sqlite3\')"', { cwd: EAGLES_ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
-      console.log('  better-sqlite3: OK after rebuild');
       nativeOk = true;
+      console.log('  better-sqlite3: OK after rebuild');
     } catch {
-      console.log('  WARN — better-sqlite3 still broken. Need Visual Studio Build Tools:');
-      console.log('         npm install -g windows-build-tools');
-      console.log('         OR install "Desktop development with C++" from Visual Studio Installer');
-      errors.push('better-sqlite3 native compilation failed');
+      // Strategy 2: inject prebuilt binaries from eagles-claude-config/prebuilt/
+      console.log('  Rebuild failed — injecting prebuilt binaries...');
+      const prebuiltDir = path.join(CONFIG_ROOT, 'prebuilt');
+
+      const nativePkgs = [
+        { name: 'better-sqlite3', file: 'better_sqlite3.node' },
+        { name: 'hnswlib-node', file: 'addon.node' }
+      ];
+
+      for (const { name, file } of nativePkgs) {
+        const prebuiltFile = path.join(prebuiltDir, name, 'Release', file);
+        if (!fs.existsSync(prebuiltFile)) continue;
+
+        // Find all pnpm locations for this package
+        const findResult = run(`find ${EAGLES_ROOT}/node_modules/.pnpm -path "*/${name}" -name "${name}" -type d 2>/dev/null`);
+        if (findResult) {
+          for (const pkgDir of findResult.split('\n').filter(Boolean)) {
+            const targetDir = path.join(pkgDir, 'build', 'Release');
+            fs.mkdirSync(targetDir, { recursive: true });
+            fs.copyFileSync(prebuiltFile, path.join(targetDir, file));
+          }
+          console.log(`  + ${name}: prebuilt binary injected`);
+        }
+      }
+
+      // Verify
+      try {
+        execSync('node -e "require(\'better-sqlite3\')"', { cwd: EAGLES_ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
+        nativeOk = true;
+        console.log('  better-sqlite3: OK');
+      } catch {
+        errors.push('better-sqlite3 broken — need C++ build tools with "Desktop development with C++" workload');
+        console.log('  FATAL — better-sqlite3 still broken');
+      }
     }
   }
 
