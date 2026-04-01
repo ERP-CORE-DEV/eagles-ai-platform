@@ -202,9 +202,26 @@ if (fs.existsSync(EAGLES_ROOT)) {
       nativeOk = true;
       console.log('  better-sqlite3: OK after rebuild');
     } catch {
-      // Strategy 2: inject prebuilt binaries from eagles-claude-config/prebuilt/
+      // Strategy 2: inject prebuilt binaries (pure Node.js, no shell find)
       console.log('  Rebuild failed — injecting prebuilt binaries...');
       const prebuiltDir = path.join(CONFIG_ROOT, 'prebuilt');
+
+      // Recursive directory walker to find package dirs in pnpm store
+      function findPkgDirs(baseDir, pkgName) {
+        const results = [];
+        try {
+          const pnpmDir = path.join(baseDir, 'node_modules', '.pnpm');
+          if (!fs.existsSync(pnpmDir)) return results;
+          for (const entry of fs.readdirSync(pnpmDir)) {
+            // Match: better-sqlite3@11.10.0 or hnswlib-node@3.0.0
+            if (entry.startsWith(pkgName + '@')) {
+              const target = path.join(pnpmDir, entry, 'node_modules', pkgName);
+              if (fs.existsSync(target)) results.push(target);
+            }
+          }
+        } catch {}
+        return results;
+      }
 
       const nativePkgs = [
         { name: 'better-sqlite3', file: 'better_sqlite3.node' },
@@ -213,17 +230,22 @@ if (fs.existsSync(EAGLES_ROOT)) {
 
       for (const { name, file } of nativePkgs) {
         const prebuiltFile = path.join(prebuiltDir, name, 'Release', file);
-        if (!fs.existsSync(prebuiltFile)) continue;
+        if (!fs.existsSync(prebuiltFile)) {
+          console.log(`  - ${name}: no prebuilt binary in repo`);
+          continue;
+        }
 
-        // Find all pnpm locations for this package
-        const findResult = run(`find ${EAGLES_ROOT}/node_modules/.pnpm -path "*/${name}" -name "${name}" -type d 2>/dev/null`);
-        if (findResult) {
-          for (const pkgDir of findResult.split('\n').filter(Boolean)) {
-            const targetDir = path.join(pkgDir, 'build', 'Release');
-            fs.mkdirSync(targetDir, { recursive: true });
-            fs.copyFileSync(prebuiltFile, path.join(targetDir, file));
-          }
-          console.log(`  + ${name}: prebuilt binary injected`);
+        const pkgDirs = findPkgDirs(EAGLES_ROOT, name);
+        if (pkgDirs.length === 0) {
+          console.log(`  - ${name}: not found in node_modules`);
+          continue;
+        }
+
+        for (const pkgDir of pkgDirs) {
+          const targetDir = path.join(pkgDir, 'build', 'Release');
+          fs.mkdirSync(targetDir, { recursive: true });
+          fs.copyFileSync(prebuiltFile, path.join(targetDir, file));
+          console.log(`  + ${name}: injected into ${path.relative(EAGLES_ROOT, targetDir)}`);
         }
       }
 
@@ -232,9 +254,11 @@ if (fs.existsSync(EAGLES_ROOT)) {
         execSync('node -e "require(\'better-sqlite3\')"', { cwd: EAGLES_ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
         nativeOk = true;
         console.log('  better-sqlite3: OK');
-      } catch {
-        errors.push('better-sqlite3 broken — need C++ build tools with "Desktop development with C++" workload');
+      } catch (e) {
+        errors.push('better-sqlite3 broken — prebuilt binary may not match Node version');
         console.log('  FATAL — better-sqlite3 still broken');
+        console.log('  Check Node version matches prebuilt (built with v24.12.0):');
+        console.log('    node --version');
       }
     }
   }
