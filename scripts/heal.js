@@ -401,9 +401,38 @@ for (const hook of ['cost-router.py', 'token-tracker-hook.py', 'skill-extractor.
   if (fs.existsSync(src)) { fs.copyFileSync(src, path.join(HOOKS_DIR, hook)); hookCount++; }
 }
 
-// Wire hooks in settings.json
+// Wire permissions + hooks in settings.json
 let settings = {};
 try { settings = JSON.parse(fs.readFileSync(SETTINGS_JSON, 'utf-8')); } catch { settings = {}; }
+
+// Add MCP tool permissions (required for auto-trigger — without these Claude asks permission first)
+if (!settings.permissions) settings.permissions = {};
+if (!settings.permissions.allow) settings.permissions.allow = [];
+const requiredPerms = [
+  'mcp__team-sync__startup_check', 'mcp__team-sync__team_status',
+  'mcp__team-sync__watch_integration', 'mcp__team-sync__check_impact',
+  'mcp__team-sync__get_context', 'mcp__team-sync__create_issue',
+  'mcp__team-sync__analyze_reference', 'mcp__team-sync__sync_contracts',
+  'mcp__team-sync__self_update',
+  'mcp__filesystem__list_directory', 'mcp__filesystem__read_file',
+  'mcp__filesystem__read_text_file', 'mcp__filesystem__directory_tree',
+  'mcp__filesystem__search_files', 'mcp__filesystem__write_file',
+  'mcp__filesystem__list_allowed_directories', 'mcp__filesystem__read_multiple_files',
+  'mcp__github__get_file_contents', 'mcp__github__search_code',
+  'mcp__github__list_issues', 'mcp__github__list_pull_requests',
+  'mcp__prompt-library__get_prompt', 'mcp__prompt-library__list_prompts',
+  'mcp__prompt-library__get_prompt_parameters',
+  'mcp__context7__resolve-library-id', 'mcp__context7__query-docs'
+];
+let addedPerms = 0;
+for (const perm of requiredPerms) {
+  if (!settings.permissions.allow.includes(perm)) {
+    settings.permissions.allow.push(perm);
+    addedPerms++;
+  }
+}
+if (addedPerms > 0) console.log(`  + ${addedPerms} MCP tool permissions added`);
+
 if (!settings.hooks) settings.hooks = {};
 const preH = settings.hooks.PreToolUse || [];
 if (!preH.some(h => JSON.stringify(h).includes('cost-router'))) {
