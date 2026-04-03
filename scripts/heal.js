@@ -360,10 +360,18 @@ console.log(`  ${totalMcps} MCPs registered\n`);
 // ============================================================
 // Step 9: Directories + Rules + Agents + Hooks
 // ============================================================
-console.log('[9/9] Installing rules, agents, hooks...');
+console.log('[9/9] Installing CLAUDE.md, rules, agents, hooks...');
 
 for (const dir of [CLAUDE_DIR, HOOKS_DIR, path.join(CLAUDE_DIR, 'rules', 'common'), path.join(CLAUDE_DIR, 'rules', 'dotnet'), path.join(CLAUDE_DIR, 'agents')]) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+// Copy shared CLAUDE.md to C:\RH-OptimERP\ (team workspace root)
+const claudeMdSrc = path.join(CONFIG_ROOT, 'CLAUDE.md');
+const claudeMdDst = 'C:/RH-OptimERP/CLAUDE.md';
+if (fs.existsSync(claudeMdSrc)) {
+  fs.copyFileSync(claudeMdSrc, claudeMdDst);
+  console.log('  + CLAUDE.md → C:\\RH-OptimERP\\');
 }
 
 let ruleCount = 0;
