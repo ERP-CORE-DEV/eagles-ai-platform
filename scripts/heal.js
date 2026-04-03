@@ -396,7 +396,7 @@ if (fs.existsSync(agentsSrc)) {
 }
 
 let hookCount = 0;
-for (const hook of ['cost-router.py', 'token-tracker-hook.py', 'skill-extractor.py', 'rate-limit-detector.py']) {
+for (const hook of ['cost-router.py', 'token-tracker-hook.py', 'skill-extractor.py', 'rate-limit-detector.py', 'team-sync-trigger.js']) {
   const src = path.join(CONFIG_ROOT, 'hooks', hook);
   if (fs.existsSync(src)) { fs.copyFileSync(src, path.join(HOOKS_DIR, hook)); hookCount++; }
 }
@@ -434,6 +434,21 @@ for (const perm of requiredPerms) {
 if (addedPerms > 0) console.log(`  + ${addedPerms} MCP tool permissions added`);
 
 if (!settings.hooks) settings.hooks = {};
+
+// UserPromptSubmit: auto-trigger team-sync when developer identifies themselves
+const userPromptHooks = settings.hooks.UserPromptSubmit || [];
+if (!userPromptHooks.some(h => JSON.stringify(h).includes('team-sync-trigger'))) {
+  const hookPath = path.join(os.homedir(), '.claude', 'hooks', 'team-sync-trigger.js').replace(/\\/g, '/');
+  userPromptHooks.push({
+    hooks: [{
+      type: 'command',
+      command: `node "${hookPath}"`
+    }]
+  });
+  settings.hooks.UserPromptSubmit = userPromptHooks;
+  console.log('  + UserPromptSubmit team-sync-trigger hook');
+}
+
 const preH = settings.hooks.PreToolUse || [];
 if (!preH.some(h => JSON.stringify(h).includes('cost-router'))) {
   preH.push({ matcher: 'Agent', hooks: [{ type: 'command', command: 'node -e "try{require(require(\'os\').homedir()+\'/.claude/hooks/cost-router.js\')}catch{}" 2>NUL || ver>NUL' }] });
