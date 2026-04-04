@@ -14,7 +14,7 @@ This is non-negotiable. The team-sync banner must appear at the start of every s
 | HATIM | hatim | MS 5.1 — Sourcing & Candidate Attraction |
 | MOHAMMED-REDA | MOHAMMED-REDA | MS 5.8 — Talent Management |
 | HOUSSINE | HOUSSINE | MS 5.3 — Hiring Process Management |
-| HOUDAIFA | HOUDAIFA | MS 5.12 — Integration & Onboarding |
+| HOUDAIFA | HOUDAIFA | MS 5.7 — Training & Skill Development |
 | HASSAN | HASSAN | MS 5.2 — Candidate Evaluation |
 
 ## Architecture
