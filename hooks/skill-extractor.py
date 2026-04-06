@@ -4,6 +4,7 @@
 Parses session transcript (JSONL) to extract tool sequences, agent combos,
 and session profiles. Writes to SonaLearningStore (orchestrator SQLite).
 """
+import os
 import sys
 import json
 import sqlite3
@@ -12,7 +13,14 @@ import time
 from collections import Counter
 from pathlib import Path
 
-ORCH_DB = 'C:/RH-OptimERP/eagles-ai-platform/.data/orchestrator/orchestrator.sqlite'
+# BUGFIX 2026-04-05: was '.data/orchestrator/orchestrator.sqlite' which does not
+# exist. The orchestrator-mcp server reads from learning.sqlite at EAGLES_DATA_ROOT.
+# This bug caused SonaLearning to silently write to a ghost file, leaving the
+# learning_patterns table empty for the entire history of the platform.
+ORCH_DB = os.path.join(
+    os.environ.get('EAGLES_DATA_ROOT', 'C:/RH-OptimERP/eagles-ai-platform/.data'),
+    'learning.sqlite'
+)
 MIN_SEQ_COUNT = 2
 MAX_SEQ_LEN = 4
 EMA_ALPHA = 0.3

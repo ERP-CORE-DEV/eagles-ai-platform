@@ -9,3 +9,7 @@ benchmark-results/
 .env.*
 !.env.example
 NUL
+.eagles-data/
+prebuilt/
+test-results/
+packages/docs/.vitepress/cache/
