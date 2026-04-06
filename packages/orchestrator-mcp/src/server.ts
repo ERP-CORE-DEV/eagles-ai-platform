@@ -19,6 +19,9 @@ import {
 import type { AgentInfo } from "./agents/types.js";
 import type { TaskDefinition } from "./tasks/types.js";
 import { missionStart } from "./mission/mission-start.js";
+import { Team } from "./teams/Team.js";
+import { executeQueue } from "./teams/executeQueue.js";
+import { Scheduler } from "./tasks/Scheduler.js";
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   SUPPLIER: ["qonto", "alan", "payfit", "anthropic", "ovh", "bouygues"],
@@ -776,6 +779,107 @@ export function createOrchestratorServer(dbDir?: string): McpServer {
         content: [{
           type: "text" as const,
           text: JSON.stringify({ messages: filtered, total: filtered.length }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // mission_execute
+  // -------------------------------------------------------------------------
+  server.tool(
+    "mission_execute",
+    {
+      goal: z.string().describe("Mission goal"),
+      teamConfig: z.object({
+        agents: z.array(z.object({
+          name: z.string(),
+          role: z.string(),
+          capabilities: z.array(z.string()),
+        })),
+        maxConcurrency: z.number().optional(),
+        maxRounds: z.number().optional(),
+      }).describe("Team configuration"),
+      context: z.string().optional().describe("Additional context to inject"),
+    },
+    async ({ goal, teamConfig, context }) => {
+      // 1. Build agent roster with synthetic agentIds.
+      const agents = teamConfig.agents.map((a, idx) => ({
+        agentId: `agent-${idx}-${a.name.replace(/\s+/g, "-")}`,
+        name: a.name,
+        role: a.role as "architect" | "engineer" | "reviewer" | "tester" | "analyst",
+        capabilities: a.capabilities,
+      }));
+
+      // 2. Create Team.
+      const team = new Team(
+        {
+          name: "mission",
+          agents,
+          maxConcurrency: teamConfig.maxConcurrency,
+          maxRounds: teamConfig.maxRounds,
+        },
+        dir,
+      );
+
+      // 3. Decompose goal into TaskSpecs using Decomposer helpers.
+      const rosterForDecomposer = agents.map((a) => ({
+        agentId: a.agentId,
+        name: a.name,
+        capabilities: a.capabilities,
+      }));
+
+      const decompositionJson = JSON.stringify(
+        agents.map((a) => ({
+          title: `${goal} — ${a.role} phase`,
+          description: `${a.role} work for: ${goal}`,
+          assignee: a.name,
+          dependsOn: [],
+          priority: "normal",
+        })),
+      );
+
+      const decomposed = applyDecomposition(decompositionJson, {
+        goal,
+        agentRoster: rosterForDecomposer,
+        maxTasks: teamConfig.maxRounds ?? 20,
+      });
+
+      // 4. Load tasks into the team queue.
+      for (const spec of decomposed.tasks) {
+        team.addTask({
+          name: spec.title,
+          description: spec.description,
+          priority: spec.priority ?? "normal",
+          dependsOn: [],
+        });
+      }
+
+      // 5. Run executeQueue with a capability-match scheduler.
+      const scheduler = new Scheduler({ strategy: "capability-match" });
+      const results = await executeQueue({
+        team,
+        scheduler,
+        maxRounds: teamConfig.maxRounds ?? team.maxRounds,
+        sharedContext: context,
+      });
+
+      // 6. Return results.
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            goal,
+            taskCount: decomposed.tasks.length,
+            warnings: decomposed.warnings,
+            dispatches: results.map((r) => ({
+              taskId: r.taskId,
+              agentName: r.agentName,
+              success: r.success,
+              promptLength: r.output.length,
+              error: r.error,
+            })),
+          }, null, 2),
         }],
       };
     },
