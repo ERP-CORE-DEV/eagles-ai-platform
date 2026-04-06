@@ -4,16 +4,26 @@ import { z } from "zod";
 import { AgentRegistryStore } from "@eagles-ai-platform/data-layer";
 import { TaskStore } from "@eagles-ai-platform/data-layer";
 import { SonaLearningStore } from "@eagles-ai-platform/data-layer";
+import { EventBus } from "@eagles-ai-platform/data-layer";
 import { computeHealth } from "./agents/lifecycle.js";
 import { findBestAgent } from "./tasks/coordination.js";
+import { MessageBus } from "./messaging/MessageBus.js";
+import {
+  buildCoordinatorSystemPrompt,
+  buildUserPrompt,
+  applyDecomposition,
+} from "./tasks/Decomposer.js";
 import type { AgentInfo } from "./agents/types.js";
 import type { TaskDefinition } from "./tasks/types.js";
+import { missionStart } from "./mission/mission-start.js";
 
 export function createOrchestratorServer(dbDir?: string): McpServer {
   const dir = dbDir ?? process.env["EAGLES_DATA_ROOT"] ?? join(process.cwd(), ".eagles-data");
   const registry = new AgentRegistryStore(join(dir, "agents.sqlite"));
   const engine = new TaskStore(join(dir, "tasks.sqlite"));
   const sona = new SonaLearningStore(join(dir, "learning.sqlite"));
+  const messagingEventBus = new EventBus(join(dir, "messaging.sqlite"));
+  const messageBus = new MessageBus(messagingEventBus);
   const server = new McpServer({ name: "orchestrator-mcp", version: "0.1.0" });
 
   // -------------------------------------------------------------------------
@@ -386,6 +396,170 @@ export function createOrchestratorServer(dbDir?: string): McpServer {
             })),
             total: patterns.length,
           }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // agent_message_send
+  // -------------------------------------------------------------------------
+  server.tool(
+    "agent_message_send",
+    {
+      from: z.string(),
+      to: z.string(),
+      content: z.string(),
+      metadata: z.record(z.unknown()).optional(),
+    },
+    async (params) => {
+      const message = messageBus.send(
+        params.from,
+        params.to,
+        params.content,
+        params.metadata ?? {},
+      );
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({ messageId: message.id }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // agent_messages_get
+  // -------------------------------------------------------------------------
+  server.tool(
+    "agent_messages_get",
+    {
+      agentName: z.string(),
+      unreadOnly: z.boolean().optional(),
+      since: z.string().optional(),
+    },
+    async (params) => {
+      let messages;
+
+      if (params.since !== undefined) {
+        messages = messageBus.getSince(params.agentName, params.since);
+        if (params.unreadOnly === true) {
+          const unreadIds = new Set(
+            messageBus.getUnread(params.agentName).map((m) => m.id),
+          );
+          messages = messages.filter((m) => unreadIds.has(m.id));
+        }
+      } else if (params.unreadOnly === true) {
+        messages = messageBus.getUnread(params.agentName);
+      } else {
+        messages = messageBus.getAll(params.agentName);
+      }
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({ messages }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // task_build_decomposition_prompt
+  // -------------------------------------------------------------------------
+  server.tool(
+    "task_build_decomposition_prompt",
+    {
+      goal: z.string(),
+      agentRoster: z.array(
+        z.object({
+          agentId: z.string(),
+          name: z.string(),
+          capabilities: z.array(z.string()),
+          systemPrompt: z.string().optional(),
+        }),
+      ),
+      maxTasks: z.number().int().positive().optional(),
+    },
+    async (params) => {
+      const systemPrompt = buildCoordinatorSystemPrompt({
+        goal: params.goal,
+        agentRoster: params.agentRoster,
+        maxTasks: params.maxTasks,
+      });
+      const userPrompt = buildUserPrompt(params.goal);
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({ systemPrompt, userPrompt }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // task_apply_decomposition
+  // -------------------------------------------------------------------------
+  server.tool(
+    "task_apply_decomposition",
+    {
+      decompositionJson: z.string(),
+      agentRoster: z.array(
+        z.object({
+          agentId: z.string(),
+          name: z.string(),
+          capabilities: z.array(z.string()),
+          systemPrompt: z.string().optional(),
+        }),
+      ),
+      goal: z.string(),
+      maxTasks: z.number().int().positive().optional(),
+    },
+    async (params) => {
+      const result = applyDecomposition(params.decompositionJson, {
+        goal: params.goal,
+        agentRoster: params.agentRoster,
+        maxTasks: params.maxTasks,
+      });
+
+      const createdTaskIds: string[] = [];
+      for (const spec of result.tasks) {
+        const task = engine.create({
+          name: spec.title,
+          description: spec.description,
+          priority: spec.priority === "high" || spec.priority === "low"
+            ? spec.priority
+            : "normal",
+        });
+        createdTaskIds.push(task.taskId);
+      }
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({ createdTaskIds, warnings: result.warnings }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // mission_start
+  // -------------------------------------------------------------------------
+  server.tool(
+    "mission_start",
+    {
+      input: z.string().describe("Natural language goal with optional /skills and --flags"),
+      cwd: z.string().optional().describe("Current working directory for project detection"),
+    },
+    async (params) => {
+      const result = await missionStart(params.input, { cwd: params.cwd });
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify(result, null, 2),
         }],
       };
     },

@@ -3,7 +3,9 @@ export type TaskStatus =
   | "assigned"
   | "running"
   | "completed"
-  | "failed";
+  | "failed"
+  | "blocked"
+  | "skipped";
 
 export type TaskPriority = "urgent" | "high" | "normal" | "low";
 

@@ -200,6 +200,61 @@ export class TaskStore {
     return rows.map(rowToTask);
   }
 
+  /**
+   * Inserts or replaces a task using the caller-supplied `taskId`.
+   *
+   * Unlike `create()`, this method does NOT generate a new UUID — the provided
+   * `taskId` is stored verbatim. Used by `DagTaskQueue` to checkpoint tasks
+   * under their own identifiers so they can be queried back by the same id.
+   */
+  upsert(task: {
+    taskId: string;
+    name: string;
+    description?: string;
+    dependsOn?: string[];
+    requiredCapabilities?: string[];
+    priority?: TaskPriority;
+    status?: TaskStatus;
+    result?: string | null;
+    completedAt?: string | null;
+  }): StoredTask {
+    const now = new Date().toISOString();
+
+    this.db.prepare(`
+      INSERT INTO tasks (task_id, name, description, depends_on, required_capabilities, priority, status, result, completed_at, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(task_id) DO UPDATE SET
+        status = excluded.status,
+        result = excluded.result,
+        completed_at = excluded.completed_at
+    `).run(
+      task.taskId,
+      task.name,
+      task.description ?? "",
+      JSON.stringify(task.dependsOn ?? []),
+      JSON.stringify(task.requiredCapabilities ?? []),
+      task.priority ?? "normal",
+      task.status ?? "pending",
+      task.result ?? null,
+      task.completedAt ?? null,
+      now,
+    );
+
+    return {
+      taskId: task.taskId,
+      name: task.name,
+      description: task.description ?? "",
+      dependsOn: task.dependsOn ?? [],
+      requiredCapabilities: task.requiredCapabilities ?? [],
+      priority: task.priority ?? "normal",
+      status: (task.status ?? "pending") as TaskStatus,
+      assignedAgent: null,
+      result: task.result ?? null,
+      createdAt: now,
+      completedAt: task.completedAt ?? null,
+    };
+  }
+
   count(): number {
     const row = this.db.prepare(
       "SELECT COUNT(*) as cnt FROM tasks",

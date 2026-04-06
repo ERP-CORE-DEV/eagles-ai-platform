@@ -6,3 +6,6 @@ export type { McpToolResult } from "./types/McpToolResult.js";
 export type { FindingSeverity, WaveStatus, WaveCheckpoint, AgentReceipt, BusMessage, WaveSummary } from "./types/Orchestration.js";
 export { MODEL_PRICING, BUDGET_THRESHOLDS, CACHE_DISCOUNT } from "./constants/ModelPricing.js";
 export type { KnownModelName } from "./constants/ModelPricing.js";
+export { Semaphore } from "./semaphore.js";
+export { extractJSON, validateOutput, buildStructuredOutputInstruction } from "./structured-output.js";
+export { executeWithRetry, type RetryOptions } from "./execute-with-retry.js";

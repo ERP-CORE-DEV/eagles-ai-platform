@@ -5,7 +5,9 @@ export type EventTopic =
   | "token.recorded"
   | "drift.detected"
   | "budget.alert"
-  | "memory.stored";
+  | "memory.stored"
+  | "agent_message:sent"
+  | "agent_message:readstate";
 
 export interface BusEvent<T = unknown> {
   readonly id: string;
