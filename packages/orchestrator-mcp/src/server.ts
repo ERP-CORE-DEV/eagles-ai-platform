@@ -1,10 +1,13 @@
 import { join } from "node:path";
+import { existsSync, createReadStream } from "node:fs";
+import { createInterface } from "node:readline";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { AgentRegistryStore } from "@eagles-ai-platform/data-layer";
 import { TaskStore } from "@eagles-ai-platform/data-layer";
 import { SonaLearningStore } from "@eagles-ai-platform/data-layer";
 import { EventBus } from "@eagles-ai-platform/data-layer";
+import { SessionIndexStore } from "@eagles-ai-platform/data-layer";
 import { computeHealth } from "./agents/lifecycle.js";
 import { findBestAgent } from "./tasks/coordination.js";
 import { MessageBus } from "./messaging/MessageBus.js";
@@ -16,6 +19,73 @@ import {
 import type { AgentInfo } from "./agents/types.js";
 import type { TaskDefinition } from "./tasks/types.js";
 import { missionStart } from "./mission/mission-start.js";
+
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  SUPPLIER: ["qonto", "alan", "payfit", "anthropic", "ovh", "bouygues"],
+  MATCHING: ["match", "rapprochement", "reconciliation", "score"],
+  AUTH: ["login", "session", "cdp", "cookie", "totp", "auth"],
+  SCRAPING: ["download", "invoice", "portal", "scraper", "pdf"],
+  BUG: ["ko", "broken", "fix", "error", "bug", "failed"],
+  TAXONOMY: ["supplier", "employee", "salary", "ceo", "classify"],
+  WORKFLOW: ["import", "export", "process", "workflow", "pipeline"],
+};
+
+function categorizeText(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) {
+      return category;
+    }
+  }
+  return undefined;
+}
+
+interface ClaudeSessionLine {
+  type?: string;
+  message?: {
+    role?: string;
+    content?: Array<{ type?: string; text?: string }> | string;
+  };
+}
+
+async function readClaudeSessionJsonl(
+  filePath: string,
+  maxMessages: number,
+): Promise<Array<{ role: string; text: string }>> {
+  const results: Array<{ role: string; text: string }> = [];
+
+  const stream = createReadStream(filePath, { encoding: "utf8" });
+  const rl = createInterface({ input: stream, crlfDelay: Infinity });
+
+  for await (const line of rl) {
+    if (results.length >= maxMessages) break;
+    const trimmed = line.trim();
+    if (trimmed.length === 0) continue;
+    try {
+      const parsed = JSON.parse(trimmed) as ClaudeSessionLine;
+      const message = parsed.message;
+      if (message === undefined || typeof message.role !== "string") continue;
+
+      let text = "";
+      if (Array.isArray(message.content)) {
+        text = message.content
+          .filter((block) => block.type === "text" && typeof block.text === "string")
+          .map((block) => block.text as string)
+          .join(" ");
+      } else if (typeof message.content === "string") {
+        text = message.content;
+      }
+
+      if (text.length > 0) {
+        results.push({ role: message.role, text });
+      }
+    } catch {
+      // skip malformed lines
+    }
+  }
+
+  return results;
+}
 
 export function createOrchestratorServer(dbDir?: string): McpServer {
   const dir = dbDir ?? process.env["EAGLES_DATA_ROOT"] ?? join(process.cwd(), ".eagles-data");
@@ -560,6 +630,152 @@ export function createOrchestratorServer(dbDir?: string): McpServer {
         content: [{
           type: "text" as const,
           text: JSON.stringify(result, null, 2),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // session_search
+  // -------------------------------------------------------------------------
+  server.tool(
+    "session_search",
+    {
+      project: z.string().optional().describe("Filter by project name"),
+      keyword: z.string().optional().describe("Search in keywords, suppliers_mentioned, or summary"),
+      dateFrom: z.string().optional().describe("ISO date start (inclusive)"),
+      dateTo: z.string().optional().describe("ISO date end (inclusive)"),
+      limit: z.number().int().positive().optional().default(20).describe("Max results"),
+    },
+    async (params) => {
+      const dbPath = join(dir, "session-index.sqlite");
+
+      if (!existsSync(dbPath)) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ sessions: [], total: 0 }),
+          }],
+        };
+      }
+
+      const store = new SessionIndexStore(dbPath);
+      try {
+        const entries = store.search({
+          project: params.project,
+          keyword: params.keyword,
+          dateFrom: params.dateFrom,
+          dateTo: params.dateTo,
+          limit: params.limit,
+        });
+
+        const sessions = entries.map((e) => ({
+          session_id: e.sessionId,
+          project_name: e.projectName,
+          session_date: e.sessionDate,
+          message_count: e.messageCount,
+          keywords: e.keywords,
+          summary: e.summary,
+        }));
+
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ sessions, total: sessions.length }),
+          }],
+        };
+      } finally {
+        store.close();
+      }
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // session_extract
+  // -------------------------------------------------------------------------
+  server.tool(
+    "session_extract",
+    {
+      sessionId: z.string().describe("Session ID to extract messages from"),
+      role: z.string().optional().default("user").describe("Message role filter: user, assistant, or all"),
+      categories: z.array(z.string()).optional().describe("Category filter: SUPPLIER, BUG, AUTH, etc."),
+      maxMessages: z.number().int().positive().optional().default(50).describe("Max messages to return"),
+    },
+    async (params) => {
+      const dbPath = join(dir, "session-index.sqlite");
+
+      if (!existsSync(dbPath)) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ error: `Session index not found at ${dbPath}` }),
+          }],
+        };
+      }
+
+      const store = new SessionIndexStore(dbPath);
+      let filePath: string | undefined;
+
+      try {
+        // Look up the session entry to get file_path
+        const allEntries = store.search({ limit: 9999 });
+        const entry = allEntries.find((e) => e.sessionId === params.sessionId);
+
+        if (entry === undefined) {
+          return {
+            content: [{
+              type: "text" as const,
+              text: JSON.stringify({ error: `Session not found: ${params.sessionId}` }),
+            }],
+          };
+        }
+
+        filePath = entry.filePath;
+      } finally {
+        store.close();
+      }
+
+      if (!existsSync(filePath)) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ error: `Session file not found on disk: ${filePath}` }),
+          }],
+        };
+      }
+
+      const rawMessages = await readClaudeSessionJsonl(filePath, params.maxMessages * 3);
+
+      const targetRole = params.role === "all" ? undefined : (params.role ?? "user");
+      const targetCategories = params.categories !== undefined && params.categories.length > 0
+        ? new Set(params.categories)
+        : undefined;
+
+      const filtered: Array<{ date: string; role: string; category: string | undefined; text: string }> = [];
+
+      for (const msg of rawMessages) {
+        if (filtered.length >= params.maxMessages) break;
+
+        if (targetRole !== undefined && msg.role !== targetRole) continue;
+
+        const category = categorizeText(msg.text);
+
+        if (targetCategories !== undefined) {
+          if (category === undefined || !targetCategories.has(category)) continue;
+        }
+
+        filtered.push({
+          date: new Date().toISOString(),
+          role: msg.role,
+          category,
+          text: msg.text.slice(0, 500),
+        });
+      }
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({ messages: filtered, total: filtered.length }),
         }],
       };
     },

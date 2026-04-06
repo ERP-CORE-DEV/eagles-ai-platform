@@ -1,0 +1,3 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"check qonto supplier status"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"checking..."}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"the login is broken ko"}]}}

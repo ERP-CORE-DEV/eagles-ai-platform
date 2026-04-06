@@ -1,6 +1,7 @@
 import type { ExpandedContext, Layer } from "./types.js";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, extname } from "node:path";
+import { resolveDataPath } from "../config.js";
 
 const SKIP_DIRS = new Set([
   "node_modules", ".git", "dist", "bin", "obj", "__pycache__",
@@ -215,7 +216,53 @@ function readClaudeMdSummary(projectPath: string): string {
   }
 }
 
-export function expandContext(projectPath: string): ExpandedContext {
+interface SessionRow {
+  summary: string;
+  keywords: string;
+  project: string;
+  started_at: string;
+}
+
+async function loadPastSessionContext(projectName: string): Promise<string[]> {
+  const dbPath = resolveDataPath("session-index.sqlite");
+  if (!existsSync(dbPath)) return [];
+
+  try {
+    // Dynamic import keeps better-sqlite3 out of the critical path when the
+    // DB does not exist — avoids load-time errors in lean test environments.
+    const { default: Database } = await import("better-sqlite3") as {
+      default: new (path: string, options?: object) => {
+        prepare: (sql: string) => { all: (...args: unknown[]) => unknown[] };
+        close: () => void;
+      };
+    };
+
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      const rows = db
+        .prepare(
+          `SELECT summary, keywords, project, started_at
+           FROM sessions
+           WHERE project LIKE ?
+           ORDER BY started_at DESC
+           LIMIT 5`,
+        )
+        .all(`%${projectName}%`) as SessionRow[];
+
+      return rows.map((row) => {
+        const date = row.started_at.slice(0, 10);
+        const keywords = row.keywords ? ` [${row.keywords}]` : "";
+        return `[${date}] ${row.project}${keywords}: ${row.summary}`;
+      });
+    } finally {
+      db.close();
+    }
+  } catch {
+    return [];
+  }
+}
+
+export async function expandContext(projectPath: string): Promise<ExpandedContext> {
   const claudeMdSummary = readClaudeMdSummary(projectPath);
 
   const allStats = walkDirectory(projectPath);
@@ -227,12 +274,15 @@ export function expandContext(projectPath: string): ExpandedContext {
 
   const layers = detectLayers(projectPath);
 
+  const projectName = projectPath.split(/[/\\]/).filter(Boolean).at(-1) ?? "";
+  const pastFindings = await loadPastSessionContext(projectName);
+
   return {
     layers,
     totalFiles,
     totalLOC,
     techStack,
-    pastFindings: [],
+    pastFindings,
     claudeMdSummary,
   };
 }

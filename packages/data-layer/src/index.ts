@@ -14,3 +14,5 @@ export { SonaLearningStore } from "./SonaLearningStore.js";
 export type { StoredPattern } from "./SonaLearningStore.js";
 export { ToolRegistryStore } from "./ToolRegistryStore.js";
 export type { StoredTool } from "./ToolRegistryStore.js";
+export { SessionIndexStore } from "./SessionIndexStore.js";
+export type { SessionIndexEntry, ExtractedMessage } from "./SessionIndexStore.js";

@@ -3,7 +3,7 @@
 Agent lifecycle management, task DAG execution, and pattern learning for coordinated multi-agent workflows.
 
 **Package**: `@eagles-ai-platform/orchestrator-mcp`
-**Tools**: 15
+**Tools**: 17
 **Store**: `$EAGLES_DATA_ROOT/orchestrator/orchestrator.sqlite`
 
 ## Concepts
@@ -276,5 +276,74 @@ Convert a natural language goal into a structured mission plan. This is the prim
     "Add CosmosDB query for exact/fuzzy matching",
     "Write unit tests covering 30 scenarios"
   ]
+}
+```
+
+---
+
+## Session Intelligence Tools
+
+### session_search
+
+Query past sessions by project name, keyword, or date range. Returns the most-relevant sessions with their summaries and keyword tags.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `project` | string | no | Filter by project name (partial match) |
+| `keyword` | string | no | Filter by keyword tag |
+| `since` | string | no | ISO 8601 — return sessions started after this date |
+| `until` | string | no | ISO 8601 — return sessions started before this date |
+| `limit` | integer | no | Maximum sessions to return (default: 10, max: 50) |
+
+**Returns**: `{ sessions: [{ id, project, summary, keywords, startedAt, endedAt }] }`
+
+**When to use**: At the start of a session to surface prior work on the same project before writing any code. Also useful for retrospectives — "what did we do on the salary scoring last week?"
+
+**Example**:
+```json
+{
+  "project": "sourcing-candidate-attraction",
+  "keyword": "salary",
+  "limit": 5
+}
+```
+
+**Example response**:
+```json
+{
+  "sessions": [
+    {
+      "id": "3f2a8c1d-...",
+      "project": "sourcing-candidate-attraction",
+      "summary": "Added SalaryMatchingService with SMIC validation and IOptions<SalaryConfig>. Fixed CosmosDB partition key on job offers.",
+      "keywords": "salary,scoring,iOptions,SMIC,CosmosDB",
+      "startedAt": "2026-03-18T09:14:00Z",
+      "endedAt": "2026-03-18T11:42:00Z"
+    }
+  ]
+}
+```
+
+### session_extract
+
+Extract filtered messages from a specific past session. Useful for retrieving the exact code snippets, decisions, or findings from a prior conversation.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `sessionId` | string | yes | Session UUID from `session_search` results |
+| `role` | `"user" \| "assistant" \| "all"` | no | Filter by message role (default: `"all"`) |
+| `contains` | string | no | Only return messages containing this substring |
+| `limit` | integer | no | Maximum messages to return (default: 20) |
+
+**Returns**: `{ messages: [{ role, content, timestamp }] }`
+
+**When to use**: After `session_search` identifies a relevant session, use `session_extract` to pull specific messages — for example, to recover a design decision, a code snippet that was written, or a finding from a prior audit.
+
+**Example**:
+```json
+{
+  "sessionId": "3f2a8c1d-...",
+  "role": "assistant",
+  "contains": "SalaryMatchingService"
 }
 ```

@@ -22,7 +22,7 @@ const MINIMAL_CONTEXT: ExpandedContext = {
 async function tryExpandContext(projectPath: string): Promise<ExpandedContext> {
   try {
     const { expandContext } = await import("./context-expander.js");
-    return expandContext(projectPath);
+    return await expandContext(projectPath);
   } catch {
     return { ...MINIMAL_CONTEXT };
   }

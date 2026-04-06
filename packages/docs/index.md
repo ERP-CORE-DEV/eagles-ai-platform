@@ -3,7 +3,7 @@ layout: home
 hero:
   name: EAGLES AI Platform
   text: AI-Powered Development Infrastructure
-  tagline: 6 MCP servers, 57 tools, 62 skills — powering Claude Code with real-time tracking, semantic memory, drift detection, and intelligent orchestration.
+  tagline: 6 MCP servers, 59 tools, 62 skills — powering Claude Code with real-time tracking, semantic memory, drift detection, and intelligent orchestration.
   actions:
     - theme: brand
       text: Get Started
@@ -70,7 +70,7 @@ pnpm docs:dev      # Live documentation at localhost:5173
 | Metric | Value |
 |--------|-------|
 | MCP Servers | 6 |
-| Total Tools | 57 |
+| Total Tools | 59 |
 | Skills Catalog | 62 |
 | Test Coverage | 655 tests across 36 files |
 | Data Stores | 12 SQLite stores (WAL mode) |
@@ -88,6 +88,6 @@ shared-utils (types, pricing, constants)
               ├──▸ vector-memory-mcp     (4 tools)
               ├──▸ drift-detector-mcp    (8 tools)
               ├──▸ verification-mcp      (12 tools)
-              ├──▸ orchestrator-mcp      (10 tools)
+              ├──▸ orchestrator-mcp      (17 tools)
               └──▸ tool-registry         (62 skills)
 ```

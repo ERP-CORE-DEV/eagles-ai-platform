@@ -50,7 +50,7 @@ packages/
 ├── vector-memory-mcp/      # 4 tools  — semantic memory (HNSW)
 ├── drift-detector-mcp/     # 8 tools  — 5-metric drift scoring
 ├── verification-mcp/       # 12 tools — checkpoints, receipts, assessments
-├── orchestrator-mcp/       # 15 tools — agents, tasks, DAG, messaging, mission
+├── orchestrator-mcp/       # 17 tools — agents, tasks, DAG, messaging, mission, session intelligence
 │   ├── src/agents/         # Agent lifecycle, health, types
 │   ├── src/tasks/          # DagTaskQueue, Scheduler, Decomposer, task-utils
 │   ├── src/mission/        # 6 sub-modules (see below)
@@ -159,6 +159,92 @@ Four hooks enforce platform-level invariants on every session:
 
 This creates a **feedback loop**: every tool call generates data that MCPs can analyze, creating insights that improve future tool usage.
 
+## Session Intelligence
+
+Session Intelligence gives `mission_start` access to historical context from past development sessions, making every mission plan aware of prior work on the same project.
+
+### Components
+
+#### SessionIndexStore
+
+A SQLite store (`session-index.sqlite` under `$EAGLES_DATA_ROOT`) that persists structured metadata for every completed Claude Code session:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TEXT (UUID) | Unique session identifier |
+| `project` | TEXT | Project name detected at session start |
+| `summary` | TEXT | Auto-generated one-paragraph session summary |
+| `keywords` | TEXT | Comma-separated tags extracted from tool calls |
+| `started_at` | TEXT | ISO 8601 timestamp |
+| `ended_at` | TEXT | ISO 8601 timestamp |
+
+Index on `(project, started_at DESC)` ensures the top-5 recent sessions query runs in a single b-tree scan.
+
+#### Session Tagger (Stop hook)
+
+A `PostToolUse` Stop hook (`hooks/session-tagger.py`) fires when Claude Code ends a session. It:
+
+1. Extracts the project name from the active `cwd`
+2. Summarises the session from the last N assistant messages (sliding window)
+3. Tags keywords from tool call arguments (file paths, function names, entity names)
+4. Writes one row to `SessionIndexStore`
+
+The hook is non-blocking — a failure never interrupts the session shutdown sequence.
+
+#### session_search MCP tool
+
+Queries `SessionIndexStore` by project, keyword, or date range. Used directly by developers and by `mission_start`'s `loadPastSessionContext` helper:
+
+```json
+{
+  "project": "sourcing-candidate-attraction",
+  "keyword": "salary scoring",
+  "limit": 5
+}
+```
+
+Returns `{ sessions: [{ id, project, summary, keywords, startedAt }] }`.
+
+#### session_extract MCP tool
+
+Retrieves filtered messages from a specific session for deep-dive recall:
+
+```json
+{
+  "sessionId": "3f2a8c...",
+  "role": "assistant",
+  "contains": "SalaryMatchingService"
+}
+```
+
+Returns `{ messages: [{ role, content, timestamp }] }`.
+
+### Integration with mission_start
+
+`context-expander.ts` calls `loadPastSessionContext(projectName)` which queries `session-index.sqlite` directly via `better-sqlite3` (read-only, no MCP round-trip). The top 5 most-recent session summaries are injected into `ExpandedContext.pastFindings`:
+
+```
+[2026-03-18] sourcing-candidate-attraction [salary,scoring,iOptions]:
+  Added SalaryMatchingService with SMIC validation and IOptions<SalaryConfig> …
+
+[2026-03-09] sourcing-candidate-attraction [gdpr,anonymize,candidates]:
+  Implemented AnonymizeCandidate() across 3 entities, added CNIL middleware …
+```
+
+These findings appear in the `MissionPlan.scope.pastFindings` array, giving every agent a one-glance summary of what was already done.
+
+### Backfill Script
+
+For sessions completed before the Session Tagger hook was deployed, run the backfill script:
+
+```bash
+python scripts/backfill-session-index.py \
+  --sessions-dir ~/.claude/projects/ \
+  --data-root $EAGLES_DATA_ROOT
+```
+
+The script walks existing `.jsonl` session files, extracts project name and keywords using the same logic as the live hook, and inserts rows without overwriting existing entries (idempotent).
+
 ## Tool Count by Server
 
 | Server | Tools | New in v2 |
@@ -168,8 +254,8 @@ This creates a **feedback loop**: every tool call generates data that MCPs can a
 | vector-memory-mcp | 4 | — |
 | drift-detector-mcp | 8 | — |
 | verification-mcp | 12 | — |
-| orchestrator-mcp | 15 | +5 (`mission_start`, `agent_message_send`, `agent_messages_get`, `task_build_decomposition_prompt`, `task_apply_decomposition`) |
-| **Total** | **57** | |
+| orchestrator-mcp | 17 | +7 (`mission_start`, `agent_message_send`, `agent_messages_get`, `task_build_decomposition_prompt`, `task_apply_decomposition`, `session_search`, `session_extract`) |
+| **Total** | **59** | |
 
 ## Technology Stack
 
