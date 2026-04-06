@@ -3,7 +3,7 @@
 Agent lifecycle management, task DAG execution, and pattern learning for coordinated multi-agent workflows.
 
 **Package**: `@eagles-ai-platform/orchestrator-mcp`
-**Tools**: 10
+**Tools**: 15
 **Store**: `$EAGLES_DATA_ROOT/orchestrator/orchestrator.sqlite`
 
 ## Concepts
@@ -119,3 +119,162 @@ Get pattern recommendations based on tags and success history.
 | `limit` | integer | no | - |
 
 **Returns**: Patterns ranked by `successRate` (0-1).
+
+---
+
+## Messaging Tools
+
+### agent_message_send
+
+Send a message from one agent to another (point-to-point or broadcast).
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `from` | string | yes | Sender agent ID or name |
+| `to` | string | yes | Recipient agent ID, name, or `"broadcast"` |
+| `content` | string | yes | Message body |
+| `metadata` | Record | no | Arbitrary key/value payload |
+
+**Returns**: `{ messageId: string }`
+
+**When to use**: Coordinate between two agents running in parallel — pass partial results, signal readiness, or trigger a downstream step without going through the task DAG.
+
+**Example**:
+```json
+{
+  "from": "code-reviewer",
+  "to": "architect",
+  "content": "Security review complete — 2 HIGH findings in AuthService.cs",
+  "metadata": { "severity": "HIGH", "file": "AuthService.cs" }
+}
+```
+
+### agent_messages_get
+
+Retrieve messages queued for an agent, with optional filtering.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `agentName` | string | yes | Recipient agent ID or name |
+| `unreadOnly` | boolean | no | Return only unread messages |
+| `since` | string | no | ISO 8601 timestamp — return messages after this time |
+
+**Returns**: `{ messages: Message[] }` where each message contains `id`, `from`, `to`, `content`, `metadata`, `readAt`, `createdAt`.
+
+**When to use**: Poll for incoming messages at the start of an agent's work unit, or drain the queue after a broadcast. Combine `unreadOnly: true` with `since` to fetch only new messages since last check.
+
+**Example**:
+```json
+{
+  "agentName": "architect",
+  "unreadOnly": true
+}
+```
+
+---
+
+## Task Decomposition Tools
+
+### task_build_decomposition_prompt
+
+Build the coordinator system prompt and user prompt needed for LLM-driven task decomposition. Call this first, then pass the prompts to an LLM, then call `task_apply_decomposition` with the response.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `goal` | string | yes | High-level goal to decompose |
+| `agentRoster` | AgentSpec[] | yes | Available agents with capabilities |
+| `maxTasks` | integer | no | Cap on tasks the LLM may create |
+
+`AgentSpec` shape: `{ agentId, name, capabilities: string[], systemPrompt? }`
+
+**Returns**: `{ systemPrompt: string, userPrompt: string }`
+
+**When to use**: The first step of LLM-assisted decomposition. Feed the returned `systemPrompt` and `userPrompt` to any capable LLM. The LLM responds with a JSON decomposition that `task_apply_decomposition` can parse.
+
+**Calling this tool also resets the DAG enforcement counter** in `eagles-enforce-dag.py`, enrolling the session.
+
+**Example**:
+```json
+{
+  "goal": "Implement salary scoring service with unit tests and CosmosDB integration",
+  "agentRoster": [
+    { "agentId": "codegen-1", "name": "codegen", "capabilities": ["dotnet", "csharp"] },
+    { "agentId": "tdd-1", "name": "tdd-guide", "capabilities": ["testing", "xunit"] }
+  ],
+  "maxTasks": 6
+}
+```
+
+### task_apply_decomposition
+
+Parse an LLM decomposition response and create the resulting tasks in the DAG. Completes the two-step decomposition workflow started by `task_build_decomposition_prompt`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `decompositionJson` | string | yes | Raw JSON string from the LLM decomposition response |
+| `agentRoster` | AgentSpec[] | yes | Same roster passed to `task_build_decomposition_prompt` |
+| `goal` | string | yes | Original goal (used for validation context) |
+| `maxTasks` | integer | no | Hard cap applied during parsing |
+
+**Returns**: `{ createdTaskIds: string[], warnings: string[] }`
+
+`warnings` contains non-fatal issues found during parsing (e.g., unknown agent reference, dependency cycle detected and skipped).
+
+**When to use**: Immediately after receiving the LLM response from `task_build_decomposition_prompt`. The created task IDs can then be assigned via `task_assign`.
+
+**Calling this tool also resets the DAG enforcement counter**, enrolling the session (same as `task_create`).
+
+**Example**:
+```json
+{
+  "decompositionJson": "{\"tasks\": [{\"title\": \"Implement SalaryMatchingService\", ...}]}",
+  "goal": "Implement salary scoring service with unit tests",
+  "agentRoster": [
+    { "agentId": "codegen-1", "name": "codegen", "capabilities": ["dotnet", "csharp"] }
+  ]
+}
+```
+
+---
+
+## Mission Tool
+
+### mission_start
+
+Convert a natural language goal into a structured mission plan. This is the primary entry point for starting any multi-step work — the "steering wheel" that translates intent into an actionable plan.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `input` | string | yes | Natural language goal, optionally with `/skills` tags and `--flags` |
+| `cwd` | string | no | Working directory for project detection (stack, framework) |
+
+**Returns**: A structured mission object containing:
+- Detected skills and required capabilities
+- Suggested agent assignments
+- Recommended task breakdown
+- Any `--flags` parsed from the input
+
+**When to use**: At the very start of a session when the user provides an open-ended goal. `mission_start` analyzes the intent and surfaces the right agents, skills, and decomposition strategy before any code is written. It is the recommended first call for any multi-agent workflow.
+
+**Example**:
+```json
+{
+  "input": "Add duplicate detection for candidates /skills dotnet cosmos --strict",
+  "cwd": "C:/rh-optimerp-sourcing-candidate-attraction"
+}
+```
+
+**Output example**:
+```json
+{
+  "goal": "Add duplicate detection for candidates",
+  "skills": ["dotnet", "cosmos"],
+  "flags": { "strict": true },
+  "suggestedAgents": ["codegen", "code-reviewer", "devsecops"],
+  "taskHints": [
+    "Implement IDuplicateDetectionService interface",
+    "Add CosmosDB query for exact/fuzzy matching",
+    "Write unit tests covering 30 scenarios"
+  ]
+}
+```

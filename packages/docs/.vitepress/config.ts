@@ -30,6 +30,8 @@ export default defineConfig({
           items: [
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Architecture', link: '/guide/architecture' },
+            { text: 'Mission (/mission)', link: '/guide/mission' },
+            { text: 'DAG Orchestration', link: '/guide/dag-orchestration' },
           ],
         },
         {
@@ -84,6 +86,9 @@ export default defineConfig({
             { text: 'ADR-002: Event Bus', link: '/adrs/002-event-bus' },
             { text: 'ADR-003: Embeddings', link: '/adrs/003-embeddings' },
             { text: 'ADR-004: Benchmarks', link: '/adrs/004-benchmarks' },
+            { text: 'ADR-006: Competitive Gap Analysis', link: '/adrs/006-competitive-gaps' },
+            { text: 'ADR-007: 1000-Repo Analysis', link: '/adrs/007-1000-repo-analysis' },
+            { text: 'ADR-008: Session-Start Contract', link: '/adrs/008-session-start' },
           ],
         },
       ],

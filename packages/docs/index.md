@@ -3,7 +3,7 @@ layout: home
 hero:
   name: EAGLES AI Platform
   text: AI-Powered Development Infrastructure
-  tagline: 7 MCP servers, 52 tools, 62 skills — powering Claude Code with real-time tracking, semantic memory, drift detection, and intelligent orchestration.
+  tagline: 6 MCP servers, 57 tools, 62 skills — powering Claude Code with real-time tracking, semantic memory, drift detection, and intelligent orchestration.
   actions:
     - theme: brand
       text: Get Started
@@ -40,6 +40,18 @@ features:
     title: Orchestrator
     details: Agent lifecycle management, task DAG execution, and pattern learning for coordinated multi-agent workflows.
     link: /mcp-servers/orchestrator
+  - icon: "\U0001F4AC"
+    title: /mission
+    details: Natural language task description converted to structured DAG execution — Decomposer breaks goals into typed sub-tasks, Scheduler assigns agents.
+    link: /guide/mission
+  - icon: "\U0001F578\uFE0F"
+    title: DAG Orchestration
+    details: DagTaskQueue + Scheduler + parallel agent execution with dependency tracking, durable state, and crash-safe task resumption.
+    link: /guide/dag-orchestration
+  - icon: "\U0001F6A7"
+    title: Enforcement Hooks
+    details: Hard-stop PreToolUse hook blocks at 4 mutations without task_create. SessionStart injects SonaLearning recall. Bypass telemetry feeds pattern learning.
+    link: /adrs/008-session-start
 ---
 
 ## Quick Install
@@ -49,7 +61,7 @@ git clone https://github.com/ERP-CORE-DEV/eagles-ai-platform.git
 cd eagles-ai-platform
 pnpm install
 pnpm build
-pnpm test          # 484 tests
+pnpm test          # 655 tests
 pnpm docs:dev      # Live documentation at localhost:5173
 ```
 
@@ -57,10 +69,10 @@ pnpm docs:dev      # Live documentation at localhost:5173
 
 | Metric | Value |
 |--------|-------|
-| MCP Servers | 7 |
-| Total Tools | 52 |
+| MCP Servers | 6 |
+| Total Tools | 57 |
 | Skills Catalog | 62 |
-| Test Coverage | 484 tests across 36 files |
+| Test Coverage | 655 tests across 36 files |
 | Data Stores | 12 SQLite stores (WAL mode) |
 | Packages | 10 (3 shared libs + 7 servers) |
 
