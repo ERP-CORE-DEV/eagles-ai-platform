@@ -400,35 +400,47 @@ let skillCount = 0;
 const skillsSrc = path.join(CONFIG_ROOT, 'skills');
 const skillsDst = path.join(CLAUDE_DIR, 'skills');
 if (fs.existsSync(skillsSrc)) {
+  let skillSkipped = 0;
   for (const skillDir of fs.readdirSync(skillsSrc)) {
     const srcDir = path.join(skillsSrc, skillDir);
     if (!fs.statSync(srcDir).isDirectory()) continue;
     const dstDir = path.join(skillsDst, skillDir);
     fs.mkdirSync(dstDir, { recursive: true });
+    let dirUpdated = false;
     for (const file of fs.readdirSync(srcDir)) {
       const srcFile = path.join(srcDir, file);
-      if (fs.statSync(srcFile).isFile()) {
-        fs.copyFileSync(srcFile, path.join(dstDir, file));
+      const dstFile = path.join(dstDir, file);
+      if (!fs.statSync(srcFile).isFile()) continue;
+      if (fs.existsSync(dstFile) && fs.statSync(dstFile).mtimeMs >= fs.statSync(srcFile).mtimeMs) {
+        continue;  // local is newer or same — don't overwrite
       }
+      fs.copyFileSync(srcFile, dstFile);
+      dirUpdated = true;
     }
-    skillCount++;
+    if (dirUpdated) skillCount++; else skillSkipped++;
   }
-  console.log(`  ${skillCount} skills copied`);
+  console.log(`  ${skillCount} skills updated, ${skillSkipped} unchanged`);
 }
 
-// Copy ALL hooks from repo (not a hardcoded list — scales with any new hooks added)
+// Copy hooks from repo — only if newer or missing (never overwrite local modifications)
 let hookCount = 0;
+let hookSkipped = 0;
 const hooksSrc = path.join(CONFIG_ROOT, 'hooks');
 if (fs.existsSync(hooksSrc)) {
   for (const hook of fs.readdirSync(hooksSrc)) {
     const src = path.join(hooksSrc, hook);
-    if (fs.statSync(src).isFile()) {
-      fs.copyFileSync(src, path.join(HOOKS_DIR, hook));
-      hookCount++;
+    const dst = path.join(HOOKS_DIR, hook);
+    if (!fs.statSync(src).isFile()) continue;
+    if (fs.existsSync(dst)) {
+      const srcTime = fs.statSync(src).mtimeMs;
+      const dstTime = fs.statSync(dst).mtimeMs;
+      if (dstTime >= srcTime) { hookSkipped++; continue; }  // local is newer or same — skip
     }
+    fs.copyFileSync(src, dst);
+    hookCount++;
   }
 }
-console.log(`  ${hookCount} hooks copied`);
+console.log(`  ${hookCount} hooks copied, ${hookSkipped} skipped (local newer)`);
 
 // Wire permissions + hooks in settings.json
 let settings = {};
