@@ -416,11 +416,19 @@ if (fs.existsSync(skillsSrc)) {
   console.log(`  ${skillCount} skills copied`);
 }
 
+// Copy ALL hooks from repo (not a hardcoded list — scales with any new hooks added)
 let hookCount = 0;
-for (const hook of ['cost-router.py', 'token-tracker-hook.py', 'skill-extractor.py', 'rate-limit-detector.py', 'team-sync-trigger.js']) {
-  const src = path.join(CONFIG_ROOT, 'hooks', hook);
-  if (fs.existsSync(src)) { fs.copyFileSync(src, path.join(HOOKS_DIR, hook)); hookCount++; }
+const hooksSrc = path.join(CONFIG_ROOT, 'hooks');
+if (fs.existsSync(hooksSrc)) {
+  for (const hook of fs.readdirSync(hooksSrc)) {
+    const src = path.join(hooksSrc, hook);
+    if (fs.statSync(src).isFile()) {
+      fs.copyFileSync(src, path.join(HOOKS_DIR, hook));
+      hookCount++;
+    }
+  }
 }
+console.log(`  ${hookCount} hooks copied`);
 
 // Wire permissions + hooks in settings.json
 let settings = {};
