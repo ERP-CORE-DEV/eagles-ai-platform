@@ -395,6 +395,27 @@ if (fs.existsSync(agentsSrc)) {
   }
 }
 
+// Copy skills (each skill is a directory with SKILL.md)
+let skillCount = 0;
+const skillsSrc = path.join(CONFIG_ROOT, 'skills');
+const skillsDst = path.join(CLAUDE_DIR, 'skills');
+if (fs.existsSync(skillsSrc)) {
+  for (const skillDir of fs.readdirSync(skillsSrc)) {
+    const srcDir = path.join(skillsSrc, skillDir);
+    if (!fs.statSync(srcDir).isDirectory()) continue;
+    const dstDir = path.join(skillsDst, skillDir);
+    fs.mkdirSync(dstDir, { recursive: true });
+    for (const file of fs.readdirSync(srcDir)) {
+      const srcFile = path.join(srcDir, file);
+      if (fs.statSync(srcFile).isFile()) {
+        fs.copyFileSync(srcFile, path.join(dstDir, file));
+      }
+    }
+    skillCount++;
+  }
+  console.log(`  ${skillCount} skills copied`);
+}
+
 let hookCount = 0;
 for (const hook of ['cost-router.py', 'token-tracker-hook.py', 'skill-extractor.py', 'rate-limit-detector.py', 'team-sync-trigger.js']) {
   const src = path.join(CONFIG_ROOT, 'hooks', hook);
@@ -461,7 +482,7 @@ if (!postH.some(h => JSON.stringify(h).includes('token-tracker'))) {
 }
 fs.writeFileSync(SETTINGS_JSON, JSON.stringify(settings, null, 2));
 
-console.log(`  ${ruleCount} rules | ${agentCount} agents | ${hookCount} hooks\n`);
+console.log(`  ${ruleCount} rules | ${agentCount} agents | ${skillCount} skills | ${hookCount} hooks\n`);
 
 // ============================================================
 // Summary
@@ -479,6 +500,7 @@ console.log(`  Token:    ${ghToken ? 'YES' : 'MISSING'}`);
 console.log(`  Native:   ${nativeOk ? 'OK' : 'BROKEN (need C++ build tools)'}`);
 console.log(`  Rules:    ${ruleCount}`);
 console.log(`  Agents:   ${agentCount}`);
+console.log(`  Skills:   ${skillCount}`);
 console.log(`  Hooks:    ${hookCount}`);
 console.log('');
 if (!nativeOk) {
