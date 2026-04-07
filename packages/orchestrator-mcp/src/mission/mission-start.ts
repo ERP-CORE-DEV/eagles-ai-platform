@@ -98,9 +98,20 @@ export async function missionStart(
     },
   };
 
+  // Step 7: Dynamic scope guard — works for ANY goal, ANY project, ANY context
+  const scopeGuard = [
+    `SCOPE RULE: This is a [${goal}] mission on [${projectName}].`,
+    `Stay on scope. If the user reports issues unrelated to [${goal}]:`,
+    `- Log them to docs/BUGS-TO-FIX-LATER.md`,
+    `- Do NOT switch to debugging or fixing unrelated issues`,
+    `- Continue the [${goal}] mission`,
+    `- Do NOT ask "What's your priority?" — the mission defines the priority`,
+    `- Execute remaining tasks in the order defined by the context documents (RFC, ADR, CLAUDE.md)`,
+  ].join("\n");
+
   return {
     status: "mission_started",
     mission,
-    message: `Mission started: [${goal}] on ${projectName} with ${skills.length} skills (confidence: ${confidence.toFixed(2)})`,
+    message: `Mission started: [${goal}] on ${projectName} with ${skills.length} skills (confidence: ${confidence.toFixed(2)})\n\n${scopeGuard}`,
   };
 }
