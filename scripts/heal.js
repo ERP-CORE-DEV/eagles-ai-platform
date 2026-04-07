@@ -241,8 +241,14 @@ if (fs.existsSync(EAGLES_ROOT)) {
       for (const pkgDir of pkgDirs) {
         const targetDir = path.join(pkgDir, 'build', 'Release');
         fs.mkdirSync(targetDir, { recursive: true });
-        fs.copyFileSync(prebuiltFile, path.join(targetDir, file));
-        console.log(`  + ${name} → ${path.relative(EAGLES_ROOT, path.join(targetDir, file))}`);
+        try {
+          fs.copyFileSync(prebuiltFile, path.join(targetDir, file));
+          console.log(`  + ${name} → ${path.relative(EAGLES_ROOT, path.join(targetDir, file))}`);
+        } catch (e) {
+          if (e.code === 'EBUSY') {
+            console.log(`  ~ ${name} skipped (file locked — MCP servers running. Binary is already working.)`);
+          } else { throw e; }
+        }
       }
     }
 
