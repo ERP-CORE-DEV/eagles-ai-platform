@@ -187,7 +187,20 @@ export function listProjects(): ProjectEntry[] {
 }
 
 function matchByKeywords(keywords: string[], registry: ProjectEntry[]): ProjectEntry | null {
-  const lowerKeywords = keywords.map((k) => k.toLowerCase());
+  // Expand hyphenated keywords: "hiring-management" → ["hiring-management", "hiring", "management"]
+  const lowerKeywords: string[] = [];
+  for (const k of keywords) {
+    const lower = k.toLowerCase();
+    lowerKeywords.push(lower);
+    if (lower.includes("-")) {
+      for (const part of lower.split("-")) {
+        if (part.length >= 3 && !lowerKeywords.includes(part)) {
+          lowerKeywords.push(part);
+        }
+      }
+    }
+  }
+
   for (const keyword of lowerKeywords) {
     for (const project of registry) {
       for (const alias of project.aliases) {
@@ -200,29 +213,78 @@ function matchByKeywords(keywords: string[], registry: ProjectEntry[]): ProjectE
   return null;
 }
 
+/**
+ * Match CWD to a project.
+ *
+ * Strategy:
+ *  1. CWD is INSIDE a project (project path is strict prefix of CWD) → exact match (deepest wins)
+ *  2. CWD is EXACTLY a project root, BUT check if it's also a parent of other projects:
+ *     - If CWD has child projects in registry → it's an umbrella dir, treat as ambiguous
+ *     - If CWD has no children → it's a leaf project, resolve it
+ *  3. CWD is a PARENT of multiple projects → ambiguous, return null (caller shows candidates)
+ *  4. CWD is a PARENT of exactly one project → return that single child
+ *  5. CWD has CLAUDE.md but isn't in registry → ad-hoc entry (only if no child projects)
+ *
+ * NEVER use substring includes on project name — causes false matches when CWD
+ * is a parent dir like "C:/RH-OptimERP" (Houssine's workspace bug).
+ */
 function matchByCwd(cwd: string, registry: ProjectEntry[]): ProjectEntry | null {
   const normalizedCwd = cwd.replace(/\\/g, "/").toLowerCase();
+  const cwdWithSlash = normalizedCwd.endsWith("/") ? normalizedCwd : normalizedCwd + "/";
 
-  // Find ALL projects whose path is a prefix of (or equal to) cwd.
-  // Then pick the MOST SPECIFIC one (longest path = deepest match).
-  const matches = registry
-    .filter(p => normalizedCwd.startsWith(p.path.toLowerCase()) ||
-                 normalizedCwd.includes(p.name.toLowerCase()))
-    .sort((a, b) => b.path.length - a.path.length); // longest path first
+  // Count child projects (projects UNDER this CWD, not equal to it)
+  const childProjects = registry.filter(p => {
+    const pp = p.path.toLowerCase();
+    return pp !== normalizedCwd && pp.startsWith(cwdWithSlash);
+  });
 
-  if (matches.length > 0) {
-    return matches[0];
+  // Strategy 1: CWD is strictly INSIDE a project (CWD is deeper than project path)
+  // Skip umbrella projects (those that have other projects as children).
+  const insideMatches = registry
+    .filter(p => {
+      const projectPath = p.path.toLowerCase();
+      const projectWithSlash = projectPath.endsWith("/") ? projectPath : projectPath + "/";
+      if (normalizedCwd === projectPath) return false; // exact match handled in Strategy 2
+      if (!cwdWithSlash.startsWith(projectWithSlash)) return false;
+      // Skip umbrella dirs: does this project have children in the registry?
+      const hasChildren = registry.some(
+        other => other.path.toLowerCase() !== projectPath &&
+                 other.path.toLowerCase().startsWith(projectWithSlash)
+      );
+      return !hasChildren;
+    })
+    .sort((a, b) => b.path.length - a.path.length);
+
+  if (insideMatches.length > 0) {
+    return insideMatches[0];
   }
 
-  // CWD has CLAUDE.md but no registry match — create an ad-hoc entry
-  const claudeMdPath = join(cwd, "CLAUDE.md");
-  if (existsSync(claudeMdPath)) {
-    const dirName = basename(cwd);
-    return {
-      name: dirName,
-      path: cwd.replace(/\\/g, "/"),
-      aliases: generateAliases(dirName),
-    };
+  // Strategy 2: CWD is exactly a project root
+  const exactMatch = registry.find(p => p.path.toLowerCase() === normalizedCwd);
+  if (exactMatch && childProjects.length === 0) {
+    // Leaf project — no children, safe to resolve
+    return exactMatch;
+  }
+  // If exactMatch exists but has children → it's an umbrella (like RH-OptimERP)
+  // Fall through to child-based resolution
+
+  // Strategy 3+4: CWD is a parent of project(s)
+  if (childProjects.length === 1) {
+    return childProjects[0];
+  }
+  // childProjects.length > 1 → ambiguous, fall through to return null
+
+  // Strategy 5: CWD has CLAUDE.md but isn't in registry and has no children
+  if (childProjects.length === 0) {
+    const claudeMdPath = join(cwd, "CLAUDE.md");
+    if (existsSync(claudeMdPath)) {
+      const dirName = basename(cwd);
+      return {
+        name: dirName,
+        path: cwd.replace(/\\/g, "/"),
+        aliases: generateAliases(dirName),
+      };
+    }
   }
 
   return null;
@@ -249,10 +311,29 @@ export function resolveProject(keywords: string[], cwd?: string): ResolvedProjec
         path: byCwd.path,
       };
     }
+
+    // matchByCwd returned null — check if CWD is a parent of multiple projects
+    // to show only relevant candidates (not ALL projects)
+    const normalizedCwd = cwd.replace(/\\/g, "/").toLowerCase();
+    const cwdWithSlash = normalizedCwd.endsWith("/") ? normalizedCwd : normalizedCwd + "/";
+    const childProjects = registry.filter(
+      p => p.path.toLowerCase().startsWith(cwdWithSlash)
+    );
+
+    if (childProjects.length > 1) {
+      return {
+        resolved: false,
+        name: "",
+        path: "",
+        candidates: childProjects.map((p) => p.name),
+      };
+    }
   }
 
   return {
     resolved: false,
+    name: "",
+    path: "",
     candidates: registry.map((p) => p.name),
   };
 }
