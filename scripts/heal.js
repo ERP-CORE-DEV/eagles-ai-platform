@@ -56,7 +56,7 @@ console.log('  Build Tools + Native Deps + MCPs + Token');
 console.log('=============================================\n');
 
 // ============================================================
-// Step 1: GitHub token
+// Step 1: GitHub token + Eraser.io API token
 // ============================================================
 console.log('[1/9] Resolving GitHub token...');
 let ghToken = '';
@@ -66,6 +66,24 @@ try {
 } catch {
   console.log('  WARN — run "gh auth login" first\n');
 }
+
+// Eraser.io API token — team-wide for diagram generation via prompt-library MCP.
+// Resolution order: env var → existing ~/.claude.json entry → hardcoded team token.
+console.log('[1b/9] Resolving Eraser.io API token...');
+let eraserToken = process.env.ERASER_API_TOKEN || '';
+if (!eraserToken) {
+  try {
+    const existingCfg = JSON.parse(fs.readFileSync(CLAUDE_JSON, 'utf-8'));
+    eraserToken = existingCfg?.mcpServers?.['prompt-library']?.env?.ERASER_API_TOKEN || '';
+  } catch {}
+}
+if (!eraserToken) {
+  eraserToken = 'Xl2xo9BFnXpXbSoAUOge';
+  console.log('  using team default token');
+} else {
+  console.log(`  OK — ${eraserToken.substring(0, 8)}...`);
+}
+console.log('');
 
 // ============================================================
 // Step 2: Ensure C++ build tools + native deps
@@ -338,7 +356,11 @@ m['team-sync'] = { type: 'stdio', command: 'node', args: [MCPS_ROOT + '/team-syn
 for (const [name, pkg] of Object.entries({ 'prompt-library': 'prompt-library-orchestrator', 'qco': 'quality-code-orchestrator' })) {
   const dist = path.join(MCPS_ROOT, pkg, 'dist', 'index.js');
   if (fs.existsSync(dist)) {
-    m[name] = { type: 'stdio', command: 'node', args: [dist.replace(/\\/g, '/')], env: {} };
+    const env = {};
+    if (name === 'prompt-library' && eraserToken) {
+      env.ERASER_API_TOKEN = eraserToken;
+    }
+    m[name] = { type: 'stdio', command: 'node', args: [dist.replace(/\\/g, '/')], env };
     console.log(`  + ${name}`);
   }
 }
