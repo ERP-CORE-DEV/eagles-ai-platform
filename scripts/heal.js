@@ -179,24 +179,38 @@ if (run('pnpm --version')) {
 console.log('[4/9] Syncing repositories...');
 const repos = {
   'eagles-ai-platform': 'https://github.com/ERP-CORE-DEV/eagles-ai-platform.git',
+  // PROMPT_MODELS — 20 DAT templates consumed by prompt-library MCP at runtime.
+  // Resolved relative to MCPs/prompt-library-orchestrator/dist/ via ../../../PROMPT_MODELS.
+  'PROMPT_MODELS': 'https://github.com/ERP-CORE-DEV/rh-optimerp-prompt-models.git',
 };
 for (const [name, url] of Object.entries(repos)) {
   const repoPath = `C:/RH-OptimERP/${name}`;
-  if (fs.existsSync(repoPath)) {
+  if (fs.existsSync(path.join(repoPath, '.git'))) {
     console.log(`  ${name}: pulling...`);
     run('git fetch origin main && git reset --hard origin/main', { cwd: repoPath });
   } else {
     console.log(`  ${name}: cloning...`);
-    run(`git clone ${url} ${repoPath}`);
+    run(`git clone ${url} "${repoPath}"`);
   }
 }
-// MCPs repo
-if (fs.existsSync(path.join(MCPS_ROOT, 'team-sync'))) {
-  console.log('  MCPs/team-sync: pulling...');
-  run('git fetch origin main && git reset --hard origin/main', { cwd: path.join(MCPS_ROOT, 'team-sync') });
-} else if (!fs.existsSync(MCPS_ROOT)) {
-  console.log('  MCPs: cloning...');
-  run(`git clone https://github.com/ERP-CORE-DEV/rh-optimerp-mcps.git ${MCPS_ROOT}`);
+// MCPs — each MCP is its own repo under C:/RH-OptimERP/MCPs/<name>/
+if (!fs.existsSync(MCPS_ROOT)) {
+  fs.mkdirSync(MCPS_ROOT, { recursive: true });
+}
+const mcpRepos = {
+  'team-sync': 'https://github.com/ERP-CORE-DEV/rh-optimerp-mcps.git',
+  'prompt-library-orchestrator': 'https://github.com/ERP-CORE-DEV/prompt-library-orchestrator.git',
+  'quality-code-orchestrator': 'https://github.com/ERP-CORE-DEV/quality-code-orchestrator.git',
+};
+for (const [name, url] of Object.entries(mcpRepos)) {
+  const repoPath = path.join(MCPS_ROOT, name);
+  if (fs.existsSync(path.join(repoPath, '.git'))) {
+    console.log(`  MCPs/${name}: pulling...`);
+    run('git fetch origin main && git reset --hard origin/main', { cwd: repoPath });
+  } else {
+    console.log(`  MCPs/${name}: cloning...`);
+    run(`git clone ${url} "${repoPath.replace(/\\/g, '/')}"`);
+  }
 }
 console.log('  OK\n');
 
