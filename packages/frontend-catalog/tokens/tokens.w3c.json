@@ -1,0 +1,241 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "RH-OptimERP Design Tokens — 3-Tier Violet Primary System (Base → System → Component). Source: design-tokens.css",
+
+  "base": {
+    "$description": "Tier 1 — Raw values, never used directly in components",
+
+    "violet": {
+      "50":  { "$value": "#f5f3ff", "$type": "color" },
+      "100": { "$value": "#ede9fe", "$type": "color" },
+      "200": { "$value": "#ddd6fe", "$type": "color" },
+      "300": { "$value": "#c4b5fd", "$type": "color" },
+      "400": { "$value": "#a78bfa", "$type": "color" },
+      "500": { "$value": "#8b5cf6", "$type": "color" },
+      "600": { "$value": "#7c3aed", "$type": "color" },
+      "700": { "$value": "#6d28d9", "$type": "color" },
+      "800": { "$value": "#5b21b6", "$type": "color" },
+      "900": { "$value": "#4c1d95", "$type": "color" },
+      "950": { "$value": "#2e1065", "$type": "color" }
+    },
+
+    "slate": {
+      "50":  { "$value": "#f8fafc", "$type": "color" },
+      "100": { "$value": "#f1f5f9", "$type": "color" },
+      "200": { "$value": "#e2e8f0", "$type": "color" },
+      "300": { "$value": "#cbd5e1", "$type": "color" },
+      "400": { "$value": "#94a3b8", "$type": "color" },
+      "500": { "$value": "#64748b", "$type": "color" },
+      "600": { "$value": "#475569", "$type": "color" },
+      "700": { "$value": "#334155", "$type": "color" },
+      "800": { "$value": "#1e293b", "$type": "color" },
+      "900": { "$value": "#0f172a", "$type": "color" },
+      "950": { "$value": "#020617", "$type": "color" }
+    },
+
+    "semantic": {
+      "emerald": {
+        "400": { "$value": "#34d399", "$type": "color" },
+        "500": { "$value": "#10b981", "$type": "color" },
+        "600": { "$value": "#059669", "$type": "color" }
+      },
+      "amber": {
+        "400": { "$value": "#fbbf24", "$type": "color" },
+        "500": { "$value": "#f59e0b", "$type": "color" },
+        "600": { "$value": "#d97706", "$type": "color" }
+      },
+      "rose": {
+        "400": { "$value": "#fb7185", "$type": "color" },
+        "500": { "$value": "#f43f5e", "$type": "color" },
+        "600": { "$value": "#e11d48", "$type": "color" }
+      },
+      "sky": {
+        "400": { "$value": "#38bdf8", "$type": "color" },
+        "500": { "$value": "#0ea5e9", "$type": "color" }
+      },
+      "teal": {
+        "400": { "$value": "#2dd4bf", "$type": "color" },
+        "500": { "$value": "#14b8a6", "$type": "color" }
+      },
+      "indigo": {
+        "500": { "$value": "#6366f1", "$type": "color" }
+      },
+      "blue": {
+        "500": { "$value": "#3b82f6", "$type": "color" },
+        "600": { "$value": "#2563eb", "$type": "color" }
+      }
+    }
+  },
+
+  "system": {
+    "$description": "Tier 2 — Semantic tokens, used by components",
+
+    "action": {
+      "primary":        { "$value": "{base.violet.600}", "$type": "color" },
+      "primary-hover":  { "$value": "{base.violet.700}", "$type": "color" },
+      "primary-active": { "$value": "{base.violet.800}", "$type": "color" },
+      "secondary":       { "$value": "{base.slate.100}", "$type": "color" },
+      "secondary-hover": { "$value": "{base.slate.200}", "$type": "color" }
+    },
+
+    "background": {
+      "default":  { "$value": "{base.slate.50}", "$type": "color" },
+      "surface":  { "$value": "#ffffff", "$type": "color" },
+      "elevated": { "$value": "#ffffff", "$type": "color" },
+      "muted":    { "$value": "{base.slate.100}", "$type": "color" }
+    },
+
+    "text": {
+      "primary":    { "$value": "{base.slate.900}", "$type": "color" },
+      "secondary":  { "$value": "{base.slate.500}", "$type": "color" },
+      "tertiary":   { "$value": "{base.slate.400}", "$type": "color" },
+      "inverse":    { "$value": "#ffffff", "$type": "color" },
+      "link":       { "$value": "{base.violet.600}", "$type": "color" },
+      "link-hover": { "$value": "{base.violet.700}", "$type": "color" }
+    },
+
+    "border": {
+      "default": { "$value": "{base.slate.200}", "$type": "color" },
+      "strong":  { "$value": "{base.slate.300}", "$type": "color" },
+      "focus":   { "$value": "{base.violet.500}", "$type": "color" }
+    },
+
+    "status": {
+      "success": { "$value": "{base.semantic.emerald.500}", "$type": "color" },
+      "warning": { "$value": "{base.semantic.amber.500}", "$type": "color" },
+      "error":   { "$value": "{base.semantic.rose.500}", "$type": "color" },
+      "info":    { "$value": "{base.semantic.blue.500}", "$type": "color" }
+    },
+
+    "contract": {
+      "$description": "French HR contract type colors (CDI/CDD/CDIC/freelance/interim/portage/auto)",
+      "cdi":       { "$value": "{base.semantic.emerald.600}", "$type": "color" },
+      "cdd":       { "$value": "{base.semantic.amber.500}", "$type": "color" },
+      "cdic":      { "$value": "{base.violet.600}", "$type": "color" },
+      "freelance": { "$value": "{base.semantic.sky.500}", "$type": "color" },
+      "interim":   { "$value": "{base.semantic.rose.500}", "$type": "color" },
+      "portage":   { "$value": "{base.semantic.teal.500}", "$type": "color" },
+      "auto":      { "$value": "{base.semantic.indigo.500}", "$type": "color" }
+    }
+  },
+
+  "component": {
+    "$description": "Tier 3 — Component-specific tokens",
+
+    "button": {
+      "primary-bg":         { "$value": "{system.action.primary}", "$type": "color" },
+      "primary-bg-hover":   { "$value": "{system.action.primary-hover}", "$type": "color" },
+      "primary-text":       { "$value": "#ffffff", "$type": "color" },
+      "secondary-bg":       { "$value": "{system.action.secondary}", "$type": "color" },
+      "secondary-bg-hover": { "$value": "{system.action.secondary-hover}", "$type": "color" },
+      "secondary-text":     { "$value": "{system.text.primary}", "$type": "color" }
+    },
+
+    "card": {
+      "bg":           { "$value": "{system.background.surface}", "$type": "color" },
+      "border":       { "$value": "{system.border.default}", "$type": "color" },
+      "radius":       { "$value": "12px", "$type": "dimension" },
+      "shadow":       { "$value": "0 1px 3px rgba(0, 0, 0, 0.08)", "$type": "shadow" },
+      "shadow-hover": { "$value": "0 4px 12px rgba(0, 0, 0, 0.1)", "$type": "shadow" }
+    },
+
+    "input": {
+      "bg":           { "$value": "{system.background.surface}", "$type": "color" },
+      "border":       { "$value": "{system.border.default}", "$type": "color" },
+      "border-focus": { "$value": "{system.border.focus}", "$type": "color" },
+      "radius":       { "$value": "8px", "$type": "dimension" },
+      "shadow-focus": { "$value": "0 0 0 3px rgba(124, 58, 237, 0.15)", "$type": "shadow" }
+    },
+
+    "sidebar": {
+      "bg":              { "$value": "linear-gradient(180deg, #0f172a 0%, #020617 100%)", "$type": "color" },
+      "width":           { "$value": "240px", "$type": "dimension" },
+      "width-collapsed": { "$value": "64px", "$type": "dimension" }
+    }
+  },
+
+  "typography": {
+    "family": {
+      "base": { "$value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", "$type": "fontFamily" },
+      "mono": { "$value": "'JetBrains Mono', 'Fira Code', 'Consolas', monospace", "$type": "fontFamily" }
+    },
+
+    "size": {
+      "xs":   { "$value": "0.75rem", "$type": "dimension" },
+      "sm":   { "$value": "0.875rem", "$type": "dimension" },
+      "base": { "$value": "1rem", "$type": "dimension" },
+      "lg":   { "$value": "1.125rem", "$type": "dimension" },
+      "xl":   { "$value": "1.25rem", "$type": "dimension" },
+      "2xl":  { "$value": "1.5rem", "$type": "dimension" },
+      "3xl":  { "$value": "1.875rem", "$type": "dimension" }
+    },
+
+    "lineHeight": {
+      "tight":   { "$value": "1.25", "$type": "number" },
+      "normal":  { "$value": "1.5", "$type": "number" },
+      "relaxed": { "$value": "1.625", "$type": "number" }
+    },
+
+    "fontWeight": {
+      "regular":  { "$value": 400, "$type": "fontWeight" },
+      "medium":   { "$value": 500, "$type": "fontWeight" },
+      "semibold": { "$value": 600, "$type": "fontWeight" },
+      "bold":     { "$value": 700, "$type": "fontWeight" }
+    }
+  },
+
+  "spacing": {
+    "0":  { "$value": "0px", "$type": "dimension" },
+    "1":  { "$value": "1px", "$type": "dimension" },
+    "2":  { "$value": "2px", "$type": "dimension" },
+    "4":  { "$value": "4px", "$type": "dimension" },
+    "6":  { "$value": "6px", "$type": "dimension" },
+    "8":  { "$value": "8px", "$type": "dimension" },
+    "10": { "$value": "10px", "$type": "dimension" },
+    "12": { "$value": "12px", "$type": "dimension" },
+    "16": { "$value": "16px", "$type": "dimension" },
+    "20": { "$value": "20px", "$type": "dimension" },
+    "24": { "$value": "24px", "$type": "dimension" },
+    "32": { "$value": "32px", "$type": "dimension" }
+  },
+
+  "radius": {
+    "sm":   { "$value": "6px", "$type": "dimension" },
+    "base": { "$value": "8px", "$type": "dimension" },
+    "md":   { "$value": "10px", "$type": "dimension" },
+    "lg":   { "$value": "12px", "$type": "dimension" },
+    "xl":   { "$value": "16px", "$type": "dimension" },
+    "full": { "$value": "9999px", "$type": "dimension" }
+  },
+
+  "shadow": {
+    "xs":       { "$value": "0 1px 2px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
+    "sm":       { "$value": "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
+    "md":       { "$value": "0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
+    "lg":       { "$value": "0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
+    "xl":       { "$value": "0 20px 25px rgba(0, 0, 0, 0.15)", "$type": "shadow" },
+    "inset-sm": { "$value": "inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03)", "$type": "shadow" }
+  },
+
+  "transition": {
+    "fast":   { "$value": "150ms ease", "$type": "duration" },
+    "normal": { "$value": "250ms ease", "$type": "duration" },
+    "slow":   { "$value": "350ms ease", "$type": "duration" },
+    "duration": {
+      "fast":   { "$value": "150ms", "$type": "duration" },
+      "normal": { "$value": "250ms", "$type": "duration" }
+    },
+    "ease-standard": { "$value": "cubic-bezier(0.16, 1, 0.3, 1)", "$type": "cubicBezier" }
+  },
+
+  "layout": {
+    "content-max-width": { "$value": "1440px", "$type": "dimension" },
+    "gutter":            { "$value": "24px", "$type": "dimension" },
+    "container": {
+      "sm": { "$value": "640px", "$type": "dimension" },
+      "md": { "$value": "768px", "$type": "dimension" },
+      "lg": { "$value": "1024px", "$type": "dimension" },
+      "xl": { "$value": "1280px", "$type": "dimension" }
+    }
+  }
+}
