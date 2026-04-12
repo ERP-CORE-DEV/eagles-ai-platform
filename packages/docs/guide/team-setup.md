@@ -76,10 +76,18 @@ Replace `YOUR_PATH` with your actual clone path:
       "command": "node",
       "args": ["YOUR_PATH/eagles-ai-platform/packages/orchestrator-mcp/dist/index.js"],
       "env": { "EAGLES_DATA_ROOT": "YOUR_PATH/eagles-ai-platform/.data" }
+    },
+    "frontend-catalog": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["YOUR_PATH/eagles-ai-platform/packages/frontend-catalog-mcp/dist/index.js"],
+      "env": { "FRONTEND_CATALOG_ROOT": "YOUR_PATH/eagles-ai-platform/packages/frontend-catalog" }
     }
   }
 }
 ```
+
+Note: `frontend-catalog` does not use `EAGLES_DATA_ROOT` — it reads the design-system package directly and holds no SQLite state.
 
 ## Step 3: Install Hooks
 

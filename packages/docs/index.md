@@ -3,7 +3,7 @@ layout: home
 hero:
   name: EAGLES AI Platform
   text: AI-Powered Development Infrastructure
-  tagline: 6 MCP servers, 59 tools, 62 skills — powering Claude Code with real-time tracking, semantic memory, drift detection, and intelligent orchestration.
+  tagline: 7 MCP servers, 58 tools, 62 skills — powering Claude Code with real-time tracking, semantic memory, drift detection, design-system lookups, and intelligent orchestration.
   actions:
     - theme: brand
       text: Get Started
