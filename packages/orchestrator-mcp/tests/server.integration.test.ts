@@ -32,7 +32,7 @@ describe("orchestrator-mcp integration", () => {
     client = await makeClient(dbDir);
   });
 
-  it("should list all 18 tools", async () => {
+  it("should list all 19 tools", async () => {
     const result = await client.listTools();
     const toolNames = result.tools.map((t) => t.name);
 
@@ -44,6 +44,7 @@ describe("orchestrator-mcp integration", () => {
     expect(toolNames).toContain("task_assign");
     expect(toolNames).toContain("task_status");
     expect(toolNames).toContain("task_results");
+    expect(toolNames).toContain("task_complete");
     expect(toolNames).toContain("learn_pattern");
     expect(toolNames).toContain("learn_suggest");
     expect(toolNames).toContain("agent_message_send");
@@ -54,7 +55,7 @@ describe("orchestrator-mcp integration", () => {
     expect(toolNames).toContain("session_search");
     expect(toolNames).toContain("session_extract");
     expect(toolNames).toContain("mission_execute");
-    expect(toolNames).toHaveLength(18);
+    expect(toolNames).toHaveLength(19);
   });
 
   it("agent lifecycle: register → heartbeat → discover", async () => {
@@ -133,6 +134,86 @@ describe("orchestrator-mcp integration", () => {
     const assignData = parseResult(assignResult) as { status: string; assignedAgent: string };
     expect(assignData.status).toBe("assigned");
     expect(assignData.assignedAgent).toBe("agent-build-1");
+  });
+
+  it("task_complete: closes write-loop and releases assigned agent", async () => {
+    await client.callTool({
+      name: "agent_register",
+      arguments: {
+        agentId: "agent-complete-1",
+        name: "completer",
+        capabilities: ["build"],
+        tags: [],
+      },
+    });
+
+    const created = parseResult(
+      await client.callTool({
+        name: "task_create",
+        arguments: {
+          name: "Run migration",
+          description: "Apply schema v42",
+          requiredCapabilities: ["build"],
+        },
+      }),
+    ) as { taskId: string };
+
+    await client.callTool({
+      name: "task_assign",
+      arguments: { taskId: created.taskId },
+    });
+
+    const completed = parseResult(
+      await client.callTool({
+        name: "task_complete",
+        arguments: { taskId: created.taskId, result: "42 rows migrated" },
+      }),
+    ) as {
+      taskId: string;
+      status: string;
+      result: string;
+      completedAt: string;
+      releasedAgent: string;
+    };
+
+    expect(completed.taskId).toBe(created.taskId);
+    expect(completed.status).toBe("completed");
+    expect(completed.result).toBe("42 rows migrated");
+    expect(completed.completedAt).toBeTruthy();
+    expect(completed.releasedAgent).toBe("agent-complete-1");
+
+    const status = parseResult(
+      await client.callTool({
+        name: "task_status",
+        arguments: { taskId: created.taskId },
+      }),
+    ) as { status: string };
+    expect(status.status).toBe("completed");
+
+    const discover = parseResult(
+      await client.callTool({
+        name: "agent_discover",
+        arguments: {},
+      }),
+    ) as { agents: Array<{ agentId: string; status: string }> };
+    const releasedAgent = discover.agents.find((a) => a.agentId === "agent-complete-1");
+    expect(releasedAgent?.status).toBe("idle");
+
+    const doubleComplete = parseResult(
+      await client.callTool({
+        name: "task_complete",
+        arguments: { taskId: created.taskId },
+      }),
+    ) as { error?: string };
+    expect(doubleComplete.error).toBe("Task already completed");
+
+    const missing = parseResult(
+      await client.callTool({
+        name: "task_complete",
+        arguments: { taskId: "does-not-exist" },
+      }),
+    ) as { error?: string };
+    expect(missing.error).toBe("Task not found: does-not-exist");
   });
 
   it("SQLite persistence: data survives across server reconnections", async () => {

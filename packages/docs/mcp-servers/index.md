@@ -1,6 +1,6 @@
 # MCP Servers
 
-The EAGLES AI Platform provides **7 MCP servers** with a total of **58 tools**.
+The EAGLES AI Platform provides **7 MCP servers** with a total of **59 tools**.
 
 ## Server Inventory
 
@@ -11,7 +11,7 @@ The EAGLES AI Platform provides **7 MCP servers** with a total of **58 tools**.
 | [Vector Memory](./vector-memory) | 4 | Semantic memory storage and search |
 | [Drift Detector](./drift-detector) | 8 | Requirement drift scoring and alerts |
 | [Verification](./verification) | 12 | Output assessment, checkpoints, receipts |
-| [Orchestrator](./orchestrator) | 10 | Agent lifecycle, task DAG, pattern learning |
+| [Orchestrator](./orchestrator) | 11 | Agent lifecycle, task DAG, pattern learning |
 | [Frontend Catalog](./frontend-catalog) | 6 | Design-system tokens, components, baselines, ADR-006 lookups |
 
 ## Registration

@@ -3,7 +3,7 @@
 Agent lifecycle management, task DAG execution, and pattern learning for coordinated multi-agent workflows.
 
 **Package**: `@eagles-ai-platform/orchestrator-mcp`
-**Tools**: 17
+**Tools**: 18
 **Store**: `$EAGLES_DATA_ROOT/orchestrator/orchestrator.sqlite`
 
 ## Concepts
@@ -98,6 +98,32 @@ Get results of a completed task.
 | Parameter | Type | Required |
 |-----------|------|----------|
 | `taskId` | string | yes |
+
+### task_complete
+
+Mark a task as completed and release its assigned agent back to `idle`. Closes the single-task write-loop that `task_create` → `task_assign` opens — without this call, tasks stay stuck in `assigned` and the agent never frees up.
+
+| Parameter | Type | Required | Default |
+|-----------|------|----------|---------|
+| `taskId` | string | yes | - |
+| `result` | string | no | `""` |
+
+**Returns**: `{ taskId, status: "completed", result, completedAt, releasedAgent }`
+
+Errors:
+- `Task not found: <id>` — no task with that ID
+- `Task already completed` — idempotency guard, includes the original `completedAt`
+- `Task already failed — cannot complete` — task is in a terminal `failed` state
+
+**When to use**: Every time you finish a unit of work that was registered via `task_create` and assigned via `task_assign`. The multi-agent DAG path (`mission_execute`) calls this internally, but single-task flows must call it explicitly.
+
+**Example**:
+```json
+{
+  "taskId": "22f41430-9090-4f80-95b9-c36c6fc2c389",
+  "result": "Applied schema v42 — 42 rows migrated"
+}
+```
 
 ### learn_pattern
 

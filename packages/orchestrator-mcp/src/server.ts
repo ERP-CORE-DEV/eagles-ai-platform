@@ -410,6 +410,77 @@ export function createOrchestratorServer(dbDir?: string): McpServer {
   );
 
   // -------------------------------------------------------------------------
+  // task_complete
+  // -------------------------------------------------------------------------
+  server.tool(
+    "task_complete",
+    {
+      taskId: z.string(),
+      result: z.string().optional(),
+    },
+    async (params) => {
+      const task = engine.get(params.taskId);
+
+      if (task === null) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ error: `Task not found: ${params.taskId}` }),
+          }],
+        };
+      }
+
+      if (task.status === "completed") {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              error: "Task already completed",
+              taskId: task.taskId,
+              completedAt: task.completedAt,
+            }),
+          }],
+        };
+      }
+
+      if (task.status === "failed") {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              error: "Task already failed — cannot complete",
+              taskId: task.taskId,
+            }),
+          }],
+        };
+      }
+
+      const completed = engine.complete(params.taskId, params.result ?? "");
+
+      if (completed.assignedAgent !== null) {
+        try {
+          registry.updateStatus(completed.assignedAgent, "idle");
+        } catch {
+          // Agent may have been unregistered; completion must not roll back.
+        }
+      }
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            taskId: completed.taskId,
+            status: completed.status,
+            result: completed.result,
+            completedAt: completed.completedAt,
+            releasedAgent: completed.assignedAgent,
+          }),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
   // learn_pattern
   // -------------------------------------------------------------------------
   server.tool(
