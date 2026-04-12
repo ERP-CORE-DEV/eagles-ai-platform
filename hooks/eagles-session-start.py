@@ -19,12 +19,16 @@ from pathlib import Path
 
 DATA_ROOT = Path(os.environ.get(
     "EAGLES_DATA_ROOT",
-    r"C:\RH-OptimERP\eagles-ai-platform\.data"
+    r"C:\RH-OptimERP\eagles-ai-platform-v2\.data"
 ))
 
 
-def load_top_skills(limit=10):
-    """Load top skills from the JSON-dumped catalog."""
+def load_top_skills(limit=None):
+    """Load all skills from the JSON-dumped catalog.
+
+    V2 surfaces the FULL catalog (62 skills) — per-prompt fuzzy matching
+    via eagles-skill-recommend.py picks the relevant subset.
+    """
     catalog_path = DATA_ROOT / "skill-catalog.json"
     if not catalog_path.exists():
         return []
@@ -32,8 +36,7 @@ def load_top_skills(limit=10):
         with catalog_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
         skills = data.get("skills", [])
-        # Take first N — they're in the order defined by the TypeScript catalog
-        return skills[:limit]
+        return skills if limit is None else skills[:limit]
     except Exception:
         return []
 
@@ -67,16 +70,27 @@ def main():
     patterns = load_recent_patterns()
 
     lines = [
-        "# EAGLES Session Contract",
+        "# EAGLES V2 Session Contract",
         "",
-        "**6 MCP servers loaded.** For multi-step tasks, call "
-        "`mcp__orchestrator__task_create` FIRST (or `task_build_decomposition_prompt`).",
+        "**EAIP V2 is ACTIVE.** Orchestrator + Verification MCPs run V2 builds.",
+        "3 SHIP patterns: P1 (evidence-gated verification), P2 (fuzzy skill matching), P5 (auto-decision engine).",
+        "",
+        "**Lifecycle (mandatory for multi-step tasks):**",
+        "1. `ToolSearch` for deferred MCP tools before first call",
+        "2. `mission_start` → `task_create` → execute → `task_results`",
+        "3. Known gap: no `task_complete` tool — `task_results` is read-only",
         "",
     ]
 
     if skills:
-        skill_names = ", ".join(s["name"] for s in skills[:10])
-        lines.append(f"**Top {len(skills)} skills**: {skill_names}")
+        # V2: surface ALL 62 skills, not just top 10 (P2 fuzzy matching uses full catalog)
+        skill_names = ", ".join(s["name"] for s in skills)
+        lines.append(f"**Skills available ({len(skills)})**: {skill_names}")
+        lines.append("")
+        lines.append(
+            "**Per-prompt skill recommendation is ACTIVE** (P2 hook, 1% rule). "
+            "On every user message, top-7 fuzzy-matched skills are surfaced."
+        )
     else:
         lines.append("**Skills**: catalog not available (run `node scripts/dump-skill-catalog.mjs`)")
     lines.append("")
