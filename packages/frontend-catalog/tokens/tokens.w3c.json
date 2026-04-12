@@ -68,36 +68,36 @@
   },
 
   "system": {
-    "$description": "Tier 2 — Semantic tokens, used by components",
+    "$description": "Tier 2 — Semantic tokens, used by components. Light values are the default; `$extensions.modes.dark` holds overrides emitted under `[data-theme=\"dark\"]`.",
 
     "action": {
-      "primary":        { "$value": "{base.violet.600}", "$type": "color" },
-      "primary-hover":  { "$value": "{base.violet.700}", "$type": "color" },
-      "primary-active": { "$value": "{base.violet.800}", "$type": "color" },
-      "secondary":       { "$value": "{base.slate.100}", "$type": "color" },
-      "secondary-hover": { "$value": "{base.slate.200}", "$type": "color" }
+      "primary":        { "$value": "{base.violet.600}", "$type": "color", "$extensions": { "modes": { "dark": "{base.violet.400}" } } },
+      "primary-hover":  { "$value": "{base.violet.700}", "$type": "color", "$extensions": { "modes": { "dark": "{base.violet.300}" } } },
+      "primary-active": { "$value": "{base.violet.800}", "$type": "color", "$extensions": { "modes": { "dark": "{base.violet.200}" } } },
+      "secondary":       { "$value": "{base.slate.100}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.800}" } } },
+      "secondary-hover": { "$value": "{base.slate.200}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.700}" } } }
     },
 
     "background": {
-      "default":  { "$value": "{base.slate.50}", "$type": "color" },
-      "surface":  { "$value": "#ffffff", "$type": "color" },
-      "elevated": { "$value": "#ffffff", "$type": "color" },
-      "muted":    { "$value": "{base.slate.100}", "$type": "color" }
+      "default":  { "$value": "{base.slate.50}",  "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.950}" } } },
+      "surface":  { "$value": "#ffffff",          "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.900}" } } },
+      "elevated": { "$value": "#ffffff",          "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.800}" } } },
+      "muted":    { "$value": "{base.slate.100}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.800}" } } }
     },
 
     "text": {
-      "primary":    { "$value": "{base.slate.900}", "$type": "color" },
-      "secondary":  { "$value": "{base.slate.500}", "$type": "color" },
-      "tertiary":   { "$value": "{base.slate.400}", "$type": "color" },
-      "inverse":    { "$value": "#ffffff", "$type": "color" },
-      "link":       { "$value": "{base.violet.600}", "$type": "color" },
-      "link-hover": { "$value": "{base.violet.700}", "$type": "color" }
+      "primary":    { "$value": "{base.slate.900}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.50}" } } },
+      "secondary":  { "$value": "{base.slate.500}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.300}" } } },
+      "tertiary":   { "$value": "{base.slate.400}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.500}" } } },
+      "inverse":    { "$value": "#ffffff",          "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.900}" } } },
+      "link":       { "$value": "{base.violet.600}", "$type": "color", "$extensions": { "modes": { "dark": "{base.violet.400}" } } },
+      "link-hover": { "$value": "{base.violet.700}", "$type": "color", "$extensions": { "modes": { "dark": "{base.violet.300}" } } }
     },
 
     "border": {
-      "default": { "$value": "{base.slate.200}", "$type": "color" },
-      "strong":  { "$value": "{base.slate.300}", "$type": "color" },
-      "focus":   { "$value": "{base.violet.500}", "$type": "color" }
+      "default": { "$value": "{base.slate.200}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.700}" } } },
+      "strong":  { "$value": "{base.slate.300}", "$type": "color", "$extensions": { "modes": { "dark": "{base.slate.600}" } } },
+      "focus":   { "$value": "{base.violet.500}", "$type": "color", "$extensions": { "modes": { "dark": "{base.violet.400}" } } }
     },
 
     "status": {
@@ -135,8 +135,8 @@
       "bg":           { "$value": "{system.background.surface}", "$type": "color" },
       "border":       { "$value": "{system.border.default}", "$type": "color" },
       "radius":       { "$value": "12px", "$type": "dimension" },
-      "shadow":       { "$value": "0 1px 3px rgba(0, 0, 0, 0.08)", "$type": "shadow" },
-      "shadow-hover": { "$value": "0 4px 12px rgba(0, 0, 0, 0.1)", "$type": "shadow" }
+      "shadow":       { "$value": "0 1px 3px rgba(0, 0, 0, 0.08)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 1px 3px rgba(0, 0, 0, 0.5)" } } },
+      "shadow-hover": { "$value": "0 4px 12px rgba(0, 0, 0, 0.1)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 4px 16px rgba(0, 0, 0, 0.65)" } } }
     },
 
     "input": {
@@ -209,12 +209,12 @@
   },
 
   "shadow": {
-    "xs":       { "$value": "0 1px 2px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
-    "sm":       { "$value": "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
-    "md":       { "$value": "0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
-    "lg":       { "$value": "0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02)", "$type": "shadow" },
-    "xl":       { "$value": "0 20px 25px rgba(0, 0, 0, 0.15)", "$type": "shadow" },
-    "inset-sm": { "$value": "inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03)", "$type": "shadow" }
+    "xs":       { "$value": "0 1px 2px rgba(0, 0, 0, 0.02)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 1px 2px rgba(0, 0, 0, 0.4)" } } },
+    "sm":       { "$value": "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.35)" } } },
+    "md":       { "$value": "0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 4px 6px -1px rgba(0, 0, 0, 0.55), 0 2px 4px -1px rgba(0, 0, 0, 0.4)" } } },
+    "lg":       { "$value": "0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.45)" } } },
+    "xl":       { "$value": "0 20px 25px rgba(0, 0, 0, 0.15)", "$type": "shadow", "$extensions": { "modes": { "dark": "0 20px 25px rgba(0, 0, 0, 0.7)" } } },
+    "inset-sm": { "$value": "inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03)", "$type": "shadow", "$extensions": { "modes": { "dark": "inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.4)" } } }
   },
 
   "transition": {

@@ -3,6 +3,8 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -10,6 +12,14 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["tokens/**/*.ts", "stories/**/*.ts", "stories/**/*.tsx"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "tokens/**/*.ts",
+    "stories/**/*.ts",
+    "stories/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx"
+  ],
+  "exclude": ["node_modules", "dist", "tokens/verify-imports.ts"]
 }

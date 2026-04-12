@@ -20,8 +20,8 @@ type Story = StoryObj;
 
 const page: React.CSSProperties = {
   fontFamily: 'var(--typography-family-base)',
-  color: 'var(--base-slate-900)',
-  background: 'var(--base-slate-50)',
+  color: 'var(--system-text-primary)',
+  background: 'var(--system-background-default)',
   minHeight: '100vh',
   padding: '0 0 64px',
 };
@@ -112,11 +112,12 @@ const container: React.CSSProperties = {
 };
 
 const section: React.CSSProperties = {
-  background: 'white',
+  background: 'var(--system-background-surface)',
   borderRadius: 'var(--component-card-radius)',
   boxShadow: 'var(--component-card-shadow)',
   padding: '32px 36px',
-  border: '1px solid var(--base-slate-100)',
+  border: '1px solid var(--system-border-default)',
+  color: 'var(--system-text-primary)',
 };
 
 const sectionHead: React.CSSProperties = {
@@ -126,7 +127,7 @@ const sectionHead: React.CSSProperties = {
   gap: '16px',
   marginBottom: '24px',
   paddingBottom: '16px',
-  borderBottom: '1px solid var(--base-slate-100)',
+  borderBottom: '1px solid var(--system-border-default)',
 };
 
 const sectionTitle: React.CSSProperties = {
@@ -141,13 +142,13 @@ const sectionKicker: React.CSSProperties = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
-  color: 'var(--base-violet-600)',
+  color: 'var(--system-text-link)',
   marginBottom: '6px',
 };
 
 const sectionMeta: React.CSSProperties = {
   fontSize: '0.8125rem',
-  color: 'var(--base-slate-500)',
+  color: 'var(--system-text-secondary)',
   fontFamily: 'var(--typography-family-mono)',
 };
 
@@ -176,7 +177,7 @@ const scaleRow: React.CSSProperties = {
   alignItems: 'baseline',
   gap: '20px',
   padding: '10px 0',
-  borderBottom: '1px solid var(--base-slate-100)',
+  borderBottom: '1px solid var(--system-border-default)',
 };
 
 const buttonGrid: React.CSSProperties = {
@@ -361,7 +362,7 @@ export const Catalog: Story = {
               <code
                 style={{
                   minWidth: '48px',
-                  color: 'var(--base-violet-600)',
+                  color: 'var(--system-text-link)',
                   fontSize: '0.75rem',
                   fontFamily: 'var(--typography-family-mono)',
                 }}
@@ -373,7 +374,7 @@ export const Catalog: Story = {
                   fontSize: size,
                   fontWeight: 500,
                   flex: 1,
-                  color: 'var(--base-slate-900)',
+                  color: 'var(--system-text-primary)',
                 }}
               >
                 The quick brown fox jumps over the lazy dog
@@ -381,7 +382,7 @@ export const Catalog: Story = {
               <code
                 style={{
                   fontSize: '0.75rem',
-                  color: 'var(--base-slate-500)',
+                  color: 'var(--system-text-secondary)',
                   fontFamily: 'var(--typography-family-mono)',
                 }}
               >
@@ -425,7 +426,7 @@ export const Catalog: Story = {
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
-                    color: 'var(--base-slate-500)',
+                    color: 'var(--system-text-secondary)',
                   }}
                 >
                   {v}
@@ -446,7 +447,7 @@ export const Catalog: Story = {
             style={{
               marginTop: '24px',
               paddingTop: '20px',
-              borderTop: '1px solid var(--base-slate-100)',
+              borderTop: '1px solid var(--system-border-default)',
               display: 'flex',
               gap: '12px',
               flexWrap: 'wrap',
@@ -484,14 +485,14 @@ export const Catalog: Story = {
             style={{
               marginTop: '20px',
               paddingTop: '16px',
-              borderTop: '1px solid var(--base-slate-100)',
+              borderTop: '1px solid var(--system-border-default)',
               display: 'flex',
               gap: '10px',
               alignItems: 'center',
               flexWrap: 'wrap',
             }}
           >
-            <span style={{ fontSize: '0.75rem', color: 'var(--base-slate-500)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--system-text-secondary)' }}>
               small:
             </span>
             {['Draft', 'PendingReview', 'Approved', 'Rejected'].map((s) => (
@@ -504,7 +505,7 @@ export const Catalog: Story = {
           style={{
             ...section,
             background:
-              'linear-gradient(135deg, var(--base-violet-50) 0%, white 100%)',
+              'linear-gradient(135deg, color-mix(in srgb, var(--system-action-primary) 10%, var(--system-background-surface)) 0%, var(--system-background-surface) 100%)',
           }}
         >
           <div style={sectionHead}>
@@ -530,11 +531,12 @@ export const Catalog: Story = {
               <div
                 key={p.name}
                 style={{
-                  background: 'white',
+                  background: 'var(--system-background-elevated)',
                   borderRadius: '12px',
                   padding: '20px',
-                  border: '1px solid var(--base-slate-200)',
+                  border: '1px solid var(--system-border-default)',
                   boxShadow: 'var(--component-card-shadow)',
+                  color: 'var(--system-text-primary)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '14px',
@@ -555,7 +557,7 @@ export const Catalog: Story = {
                     <div
                       style={{
                         fontSize: '0.8125rem',
-                        color: 'var(--base-slate-500)',
+                        color: 'var(--system-text-secondary)',
                         marginTop: '2px',
                       }}
                     >
@@ -569,7 +571,7 @@ export const Catalog: Story = {
                     display: 'flex',
                     gap: '8px',
                     paddingTop: '12px',
-                    borderTop: '1px solid var(--base-slate-100)',
+                    borderTop: '1px solid var(--system-border-default)',
                   }}
                 >
                   <Button variant="primary" size="small">
@@ -588,7 +590,7 @@ export const Catalog: Story = {
           style={{
             textAlign: 'center',
             fontSize: '0.75rem',
-            color: 'var(--base-slate-400)',
+            color: 'var(--system-text-tertiary)',
             fontFamily: 'var(--typography-family-mono)',
             padding: '16px 0 0',
           }}
