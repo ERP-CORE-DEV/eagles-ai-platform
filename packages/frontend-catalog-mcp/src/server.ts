@@ -301,6 +301,57 @@ export function createFrontendCatalogServer(): McpServer {
     return JSON.parse(raw) as Manifest;
   }
 
+  const SEMANTIC_KEYWORDS: Record<string, string[]> = {
+    AppShell: ["shell", "app", "layout", "sidebar", "topbar", "frame", "page"],
+    PageHeader: ["page", "header", "title", "breadcrumb", "dashboard", "section"],
+    Section: ["section", "layout", "group", "container", "dashboard"],
+    Drawer: ["drawer", "sidebar", "panel", "sidepanel", "overlay"],
+    Modal: ["modal", "dialog", "popup", "overlay", "confirm"],
+    Card: ["card", "container", "panel", "tile", "surface"],
+    Divider: ["divider", "separator", "rule", "line"],
+    ScrollArea: ["scroll", "overflow", "container"],
+    DataTable: ["table", "grid", "list", "rows", "data", "dashboard", "sort", "filter", "pagination"],
+    Stat: ["stat", "kpi", "metric", "number", "value", "dashboard", "analytics"],
+    MetricCard: ["metric", "kpi", "stat", "card", "dashboard", "analytics", "number"],
+    Tag: ["tag", "label", "chip", "badge", "marker"],
+    Chip: ["chip", "tag", "label", "pill"],
+    Avatar: ["avatar", "user", "profile", "picture"],
+    Badge: ["badge", "count", "indicator", "status", "notification"],
+    Progress: ["progress", "bar", "loading", "completion", "percent"],
+    Tooltip: ["tooltip", "hover", "hint", "popover"],
+    EmptyState: ["empty", "zero", "placeholder", "noresults", "nodata"],
+    FormField: ["form", "field", "input", "label", "validation"],
+    Input: ["input", "text", "form", "field", "textbox"],
+    Textarea: ["textarea", "multiline", "text", "form", "input"],
+    Select: ["select", "dropdown", "picker", "combobox", "form"],
+    MultiSelect: ["multiselect", "select", "dropdown", "tags", "form"],
+    Checkbox: ["checkbox", "check", "toggle", "form", "boolean"],
+    Radio: ["radio", "option", "choice", "form"],
+    Switch: ["switch", "toggle", "boolean", "on", "off"],
+    DatePicker: ["date", "picker", "calendar", "datetime", "form"],
+    FileUpload: ["file", "upload", "dropzone", "attachment", "form"],
+    Toast: ["toast", "notification", "snackbar", "alert", "feedback"],
+    Alert: ["alert", "notification", "warning", "error", "info", "banner"],
+    Skeleton: ["skeleton", "loading", "placeholder", "shimmer"],
+    Spinner: ["spinner", "loading", "loader", "progress"],
+    CommandPalette: ["command", "palette", "search", "kbar", "cmdk", "shortcut"],
+    Breadcrumb: ["breadcrumb", "navigation", "trail", "path", "dashboard"],
+    Tabs: ["tabs", "navigation", "sections", "dashboard", "switcher"],
+    Stepper: ["stepper", "wizard", "steps", "progress", "workflow"],
+    Pagination: ["pagination", "paging", "pages", "navigation", "table"],
+    Menu: ["menu", "dropdown", "navigation", "options", "actions"],
+    KanbanBoard: ["kanban", "board", "columns", "workflow", "dashboard", "drag", "pipeline", "cards"],
+    CandidateCard: ["candidate", "card", "applicant", "profile", "recruitment", "hr"],
+    JobCard: ["job", "card", "posting", "offer", "recruitment", "vacancy", "hr"],
+    ScoreBadge: ["score", "badge", "rating", "match", "percentage"],
+    FilterBar: ["filter", "bar", "facets", "search", "dashboard", "query"],
+    TimelineEvent: ["timeline", "event", "history", "activity", "feed"],
+    ExportButton: ["export", "download", "csv", "excel", "action"],
+    SearchBar: ["search", "bar", "query", "find", "filter", "dashboard"],
+    Button: ["button", "action", "cta", "submit", "click"],
+    StatusBadge: ["status", "badge", "state", "indicator", "label"],
+  };
+
   server.tool(
     "catalog_search_pattern",
     {
@@ -313,28 +364,39 @@ export function createFrontendCatalogServer(): McpServer {
         const needle = query.toLowerCase().trim();
         const words = needle.split(/[\s-_.]+/).filter(Boolean);
         const scored = manifest.components.map((c) => {
-          const haystack = [
-            c.name,
-            c.file,
-            ...c.tokens,
-          ]
-            .join(" ")
-            .toLowerCase();
+          const nameLower = c.name.toLowerCase();
+          const haystack = [c.name, c.file, ...c.tokens].join(" ").toLowerCase();
+          const semantic = SEMANTIC_KEYWORDS[c.name] ?? [];
           let hits = 0;
-          for (const w of words) if (haystack.includes(w)) hits += 2;
-          const nameBonus = c.name.toLowerCase().includes(needle) ? 10 : 0;
-          const lev = levenshtein(needle, c.name.toLowerCase());
-          const score = hits + nameBonus - lev * 0.1;
+          let semHits = 0;
+          for (const w of words) {
+            if (haystack.includes(w)) hits += 2;
+            let best = 0;
+            for (const k of semantic) {
+              if (k === w) { best = 5; break; }
+              if (k.includes(w) || w.includes(k)) best = Math.max(best, 3);
+            }
+            semHits += best;
+          }
+          const nameBonus = nameLower.includes(needle) ? 10 : 0;
+          const levPenalty = Math.min(levenshtein(needle, nameLower) * 0.05, 2);
+          const score = hits + nameBonus + semHits - levPenalty;
           return { ...c, score };
         });
-        scored.sort((a, b) => b.score - a.score);
-        const top = scored.slice(0, limit).map((c) => ({
+        const relevant = scored.filter((c) => c.score > 0);
+        relevant.sort((a, b) => b.score - a.score);
+        const top = relevant.slice(0, limit).map((c) => ({
           name: c.name,
           file: c.file,
           tokenCount: c.tokens.length,
           score: Number(c.score.toFixed(2)),
         }));
-        return text({ query, total: manifest.count, matches: top });
+        return text({
+          query,
+          total: manifest.count,
+          matched: relevant.length,
+          matches: top,
+        });
       } catch (err) {
         return errorText(`catalog_search_pattern failed: ${(err as Error).message}`);
       }
