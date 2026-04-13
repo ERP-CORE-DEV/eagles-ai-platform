@@ -1,0 +1,81 @@
+/* Tooltip — hover/focus tooltip via pure CSS. Token-only, light + dark. */
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 100;
+  display: inline-block;
+  max-width: 240px;
+  padding: var(--spacing-6) var(--spacing-10);
+  background-color: var(--system-text-primary);
+  color: var(--system-text-inverse);
+  font-family: var(--typography-family-base);
+  font-size: var(--typography-size-xs);
+  font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-tight);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.tooltip-wrapper:hover .tooltip,
+.tooltip-wrapper:focus-within .tooltip {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Placements */
+.tooltip-top {
+  bottom: calc(100% + var(--spacing-6));
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+}
+.tooltip-wrapper:hover .tooltip-top,
+.tooltip-wrapper:focus-within .tooltip-top {
+  transform: translateX(-50%) scale(1);
+}
+
+.tooltip-bottom {
+  top: calc(100% + var(--spacing-6));
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+}
+.tooltip-wrapper:hover .tooltip-bottom,
+.tooltip-wrapper:focus-within .tooltip-bottom {
+  transform: translateX(-50%) scale(1);
+}
+
+.tooltip-left {
+  right: calc(100% + var(--spacing-6));
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+}
+.tooltip-wrapper:hover .tooltip-left,
+.tooltip-wrapper:focus-within .tooltip-left {
+  transform: translateY(-50%) scale(1);
+}
+
+.tooltip-right {
+  left: calc(100% + var(--spacing-6));
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+}
+.tooltip-wrapper:hover .tooltip-right,
+.tooltip-wrapper:focus-within .tooltip-right {
+  transform: translateY(-50%) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    transition: none;
+  }
+}

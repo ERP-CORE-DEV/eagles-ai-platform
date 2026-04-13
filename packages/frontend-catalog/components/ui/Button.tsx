@@ -1,32 +1,28 @@
-import React from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import './Button.css';
 
-export interface ButtonProps {
+export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
+export type ButtonSize = 'small' | 'medium' | 'large';
+
+export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'type'> {
   /** HTML button type attribute */
   type?: 'button' | 'submit' | 'reset';
   /** Visual variant — maps to design token color families */
-  variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
-  /** Button size — small/medium/large */
-  size?: 'small' | 'medium' | 'large';
+  variant?: ButtonVariant;
+  /** Button size */
+  size?: ButtonSize;
   /** Shows loading spinner and disables interaction */
   loading?: boolean;
-  /** Disables the button */
-  disabled?: boolean;
-  /** Additional CSS class names */
-  className?: string;
   /** Button content */
-  children: React.ReactNode;
-  /** Click handler */
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  children: ReactNode;
 }
 
 /**
- * Button component with multiple variants and loading states.
+ * Button — interactive gold reference. Token-only, light + dark.
  *
- * Uses RH-OptimERP design tokens (violet primary).
- * DAT Reference: [DAT 5.1] Interactive UI components
+ * All colors resolved via var(--component-button-*) and var(--system-status-*).
  */
-const Button: React.FC<ButtonProps> = ({
+export function Button({
   type = 'button',
   variant = 'primary',
   size = 'medium',
@@ -34,10 +30,9 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   className = '',
   children,
-  onClick,
   ...props
-}) => {
-  const buttonClass = [
+}: ButtonProps) {
+  const classes = [
     'btn',
     `btn-${variant}`,
     `btn-${size}`,
@@ -52,17 +47,16 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       type={type}
-      className={buttonClass}
+      className={classes}
       disabled={isDisabled}
-      onClick={onClick}
-      aria-busy={loading}
+      aria-busy={loading || undefined}
       {...props}
     >
       {loading && (
         <span className="btn-spinner" aria-hidden="true">
-          <svg className="spinner" viewBox="0 0 24 24">
+          <svg className="btn-spinner-svg" viewBox="0 0 24 24">
             <circle
-              className="spinner-circle"
+              className="btn-spinner-circle"
               cx="12"
               cy="12"
               r="10"
@@ -72,11 +66,9 @@ const Button: React.FC<ButtonProps> = ({
           </svg>
         </span>
       )}
-      <span className={loading ? 'btn-text-loading' : 'btn-text'}>
-        {children}
-      </span>
+      <span className={loading ? 'btn-text-loading' : 'btn-text'}>{children}</span>
     </button>
   );
-};
+}
 
 export default Button;

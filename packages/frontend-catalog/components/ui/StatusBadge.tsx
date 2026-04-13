@@ -1,11 +1,10 @@
-import React from 'react';
-import { Tag } from 'antd';
+import './StatusBadge.css';
 
-type StatusColor = 'default' | 'processing' | 'success' | 'error' | 'warning';
+export type StatusTone = 'default' | 'info' | 'success' | 'warning' | 'error';
 
-export const STATE_COLORS: Record<string, StatusColor> = {
+export const STATE_TONES: Record<string, StatusTone> = {
   Draft: 'default',
-  PendingReview: 'processing',
+  PendingReview: 'info',
   Approved: 'success',
   Rejected: 'error',
   Published: 'success',
@@ -16,10 +15,10 @@ export const STATE_COLORS: Record<string, StatusColor> = {
   Archived: 'default',
   Open: 'success',
   Expired: 'warning',
-  Scheduled: 'processing',
+  Scheduled: 'info',
   Cancelled: 'error',
-  InProgress: 'processing',
-} as const;
+  InProgress: 'info',
+};
 
 export const FRENCH_LABELS: Record<string, string> = {
   Draft: 'Brouillon',
@@ -40,7 +39,7 @@ export const FRENCH_LABELS: Record<string, string> = {
 };
 
 export interface StatusBadgeProps {
-  /** Status key — maps to STATE_COLORS and FRENCH_LABELS */
+  /** Status key — maps to STATE_TONES and FRENCH_LABELS */
   status: string;
   /** Badge size */
   size?: 'small' | 'default';
@@ -51,37 +50,35 @@ export interface StatusBadgeProps {
 }
 
 /**
- * StatusBadge — displays a colored tag for 15 French HR statuses.
+ * StatusBadge — display-component gold reference.
  *
- * Uses antd Tag with STATE_COLORS mapping and FRENCH_LABELS for i18n.
- * DAT Reference: [DAT 5.1] Status display components
+ * Renders a colored tag for 15 French HR statuses. Token-only styling,
+ * light + dark via data-theme="dark".
  */
-const StatusBadge: React.FC<StatusBadgeProps> = ({
+export function StatusBadge({
   status,
   size = 'default',
   showDot = true,
   className = '',
-}) => {
-  const color = STATE_COLORS[status] ?? 'default';
+}: StatusBadgeProps) {
+  const tone = STATE_TONES[status] ?? 'default';
   const label = FRENCH_LABELS[status] ?? status;
 
+  const classes = [
+    'status-badge',
+    `status-badge-${tone}`,
+    `status-badge-${size}`,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <Tag
-      color={color}
-      className={`status-badge ${className}`}
-      style={{
-        fontSize: size === 'small' ? '0.75rem' : '0.875rem',
-        borderRadius: '9999px',
-        padding: size === 'small' ? '0 8px' : '2px 12px',
-        fontWeight: 500,
-        lineHeight: size === 'small' ? '20px' : '24px',
-        margin: 0,
-      }}
-    >
-      {showDot && <span style={{ marginRight: '6px', fontSize: '8px' }}>●</span>}
-      {label}
-    </Tag>
+    <span className={classes} role="status" aria-label={label}>
+      {showDot && <span className="status-badge-dot" aria-hidden="true" />}
+      <span className="status-badge-label">{label}</span>
+    </span>
   );
-};
+}
 
 export default StatusBadge;

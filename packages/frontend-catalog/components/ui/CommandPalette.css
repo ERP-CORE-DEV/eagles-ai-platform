@@ -1,0 +1,124 @@
+/* CommandPalette — modal-style command launcher. Token-only, light + dark. */
+
+.command-palette-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--spacing-32) var(--spacing-16) var(--spacing-16);
+  font-family: var(--typography-family-base);
+}
+
+.command-palette-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: var(--system-text-primary);
+  opacity: 0.4;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.command-palette-dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - var(--spacing-32) * 2);
+  background-color: var(--system-background-elevated);
+  color: var(--system-text-primary);
+  border: 1px solid var(--system-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.command-palette-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-12) var(--spacing-16);
+  border-bottom: 1px solid var(--system-border-default);
+}
+
+.command-palette-input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--system-text-tertiary);
+}
+
+.command-palette-input-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.command-palette-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--system-text-primary);
+  font-family: inherit;
+  font-size: var(--typography-size-base);
+  line-height: var(--typography-line-height-normal);
+  padding: var(--spacing-4) 0;
+}
+
+.command-palette-input::placeholder {
+  color: var(--system-text-tertiary);
+}
+
+.command-palette-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-8);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.command-palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  padding: var(--spacing-8) var(--spacing-12);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--system-text-primary);
+  font-size: var(--typography-size-sm);
+  line-height: var(--typography-line-height-tight);
+  transition: var(--transition-fast);
+}
+
+.command-palette-item-active {
+  background-color: var(--system-background-muted);
+}
+
+.command-palette-item-label {
+  flex: 1 1 auto;
+  font-weight: var(--typography-font-weight-medium);
+}
+
+.command-palette-item-hint {
+  flex-shrink: 0;
+  font-size: var(--typography-size-xs);
+  color: var(--system-text-tertiary);
+  font-family: var(--typography-family-mono);
+}
+
+.command-palette-empty {
+  margin: 0;
+  padding: var(--spacing-24);
+  text-align: center;
+  color: var(--system-text-tertiary);
+  font-size: var(--typography-size-sm);
+}

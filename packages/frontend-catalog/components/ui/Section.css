@@ -1,0 +1,55 @@
+/* Section — token-only, light + dark. */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  background-color: var(--component-card-bg);
+  border: 1px solid var(--component-card-border);
+  border-radius: var(--component-card-radius);
+  font-family: var(--typography-family-base);
+  color: var(--system-text-primary);
+}
+
+.section-padded {
+  padding: var(--spacing-24);
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.section-kicker {
+  font-size: var(--typography-size-xs);
+  font-weight: var(--typography-font-weight-semibold);
+  color: var(--system-text-link);
+  text-transform: uppercase;
+  letter-spacing: var(--spacing-1);
+  margin: 0;
+  line-height: var(--typography-line-height-tight);
+}
+
+.section-title {
+  font-size: var(--typography-size-xl);
+  font-weight: var(--typography-font-weight-semibold);
+  color: var(--system-text-primary);
+  margin: 0;
+  line-height: var(--typography-line-height-tight);
+}
+
+.section-description {
+  font-size: var(--typography-size-sm);
+  font-weight: var(--typography-font-weight-regular);
+  color: var(--system-text-secondary);
+  margin: 0;
+  line-height: var(--typography-line-height-normal);
+}
+
+.section-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  color: var(--system-text-primary);
+}

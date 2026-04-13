@@ -1,0 +1,106 @@
+/* Alert — inline persistent message. Token-only, light + dark. */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  background-color: var(--system-background-surface);
+  color: var(--system-text-primary);
+  border: 1px solid var(--system-border-default);
+  border-left: 4px solid var(--system-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--typography-family-base);
+}
+
+.alert-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: var(--spacing-2);
+  color: var(--system-text-secondary);
+}
+
+.alert-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.alert-title {
+  margin: 0;
+  font-size: var(--typography-size-sm);
+  font-weight: var(--typography-font-weight-semibold);
+  color: var(--system-text-primary);
+  line-height: var(--typography-line-height-tight);
+}
+
+.alert-description {
+  margin: 0;
+  font-size: var(--typography-size-sm);
+  color: var(--system-text-secondary);
+  line-height: var(--typography-line-height-normal);
+}
+
+.alert-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--system-text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+  outline: none;
+}
+
+.alert-dismiss:hover {
+  background-color: var(--system-background-muted);
+  color: var(--system-text-primary);
+}
+
+.alert-dismiss:focus-visible {
+  box-shadow: 0 0 0 2px var(--system-border-focus);
+}
+
+.alert-dismiss-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Tones — left-border indicator + matching icon color */
+.alert-info {
+  border-left-color: var(--system-status-info);
+}
+.alert-info .alert-icon {
+  color: var(--system-status-info);
+}
+
+.alert-success {
+  border-left-color: var(--system-status-success);
+}
+.alert-success .alert-icon {
+  color: var(--system-status-success);
+}
+
+.alert-warning {
+  border-left-color: var(--system-status-warning);
+}
+.alert-warning .alert-icon {
+  color: var(--system-status-warning);
+}
+
+.alert-error {
+  border-left-color: var(--system-status-error);
+}
+.alert-error .alert-icon {
+  color: var(--system-status-error);
+}

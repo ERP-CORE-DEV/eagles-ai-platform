@@ -1,0 +1,85 @@
+/* FilterBar — horizontal toolbar of filter pills. Token-only. */
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  padding: var(--spacing-8);
+  background-color: var(--system-background-surface);
+  border: 1px solid var(--system-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--typography-family-base);
+}
+
+.filter-bar-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-bar-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-4) var(--spacing-12);
+  border-radius: var(--radius-full);
+  background-color: var(--system-background-muted);
+  border: 1px solid var(--system-border-default);
+  color: var(--system-text-secondary);
+  font-family: inherit;
+  font-size: var(--typography-size-sm);
+  font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-tight);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  outline: none;
+}
+
+.filter-bar-pill:hover {
+  border-color: var(--system-border-strong);
+  color: var(--system-text-primary);
+}
+
+.filter-bar-pill:focus-visible {
+  box-shadow: 0 0 0 3px var(--system-border-focus);
+}
+
+.filter-bar-pill-active {
+  background-color: var(--system-action-primary);
+  border-color: var(--system-action-primary);
+  color: var(--system-text-inverse);
+}
+
+.filter-bar-pill-active:hover {
+  background-color: var(--system-action-primary-hover);
+  border-color: var(--system-action-primary-hover);
+  color: var(--system-text-inverse);
+}
+
+.filter-bar-clear {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-4) var(--spacing-12);
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: var(--system-text-link);
+  font-family: inherit;
+  font-size: var(--typography-size-sm);
+  font-weight: var(--typography-font-weight-medium);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  outline: none;
+  flex-shrink: 0;
+}
+
+.filter-bar-clear:hover {
+  color: var(--system-text-link-hover);
+}
+
+.filter-bar-clear:focus-visible {
+  box-shadow: 0 0 0 3px var(--system-border-focus);
+  border-radius: var(--radius-sm);
+}

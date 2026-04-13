@@ -1,26 +1,26 @@
-/* Button Component Styles — sourced from rh-optimerp-sourcing-candidate-attraction */
+/* Button — token-only. Light + dark via data-theme="dark". */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
   border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.5;
+  border-radius: var(--radius-md);
+  font-family: var(--typography-family-base);
+  font-size: var(--typography-size-sm);
+  font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-normal);
   cursor: pointer;
-  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: var(--transition-fast);
   text-decoration: none;
   outline: none;
   user-select: none;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
 .btn:focus-visible {
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 0 0 3px var(--system-border-focus);
 }
 
 .btn:disabled {
@@ -29,73 +29,111 @@
 }
 
 /* Sizes */
-.btn-small { padding: 4px 12px; font-size: 12px; border-radius: 6px; }
-.btn-large { padding: 10px 20px; font-size: 16px; border-radius: 10px; }
+.btn-small {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--typography-size-xs);
+  border-radius: var(--radius-sm);
+}
+.btn-large {
+  padding: var(--spacing-4) var(--spacing-6);
+  font-size: var(--typography-size-base);
+  border-radius: var(--radius-lg);
+}
 
 /* Variants */
 .btn-primary {
-  background-color: #7c3aed;
-  border-color: #7c3aed;
-  color: #ffffff;
+  background-color: var(--component-button-primary-bg);
+  border-color: var(--component-button-primary-bg);
+  color: var(--component-button-primary-text);
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: #6d28d9;
-  border-color: #6d28d9;
+  background-color: var(--component-button-primary-bg-hover);
+  border-color: var(--component-button-primary-bg-hover);
 }
 
 .btn-secondary {
-  background-color: var(--system-action-secondary, rgba(100, 116, 139, 0.12));
-  border-color: var(--system-border-default, #e2e8f0);
-  color: var(--system-text-primary, #0f172a);
+  background-color: var(--component-button-secondary-bg);
+  border-color: var(--system-border-default);
+  color: var(--component-button-secondary-text);
 }
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--system-action-secondary-hover, rgba(100, 116, 139, 0.20));
-  border-color: var(--system-border-focus, #7c3aed);
+  background-color: var(--component-button-secondary-bg-hover);
+  border-color: var(--system-border-focus);
 }
 
 .btn-success {
-  background-color: #10b981;
-  border-color: #10b981;
-  color: #ffffff;
+  background-color: var(--system-status-success);
+  border-color: var(--system-status-success);
+  color: var(--component-button-primary-text);
 }
 .btn-success:hover:not(:disabled) {
-  background-color: rgba(16, 185, 129, 0.8);
+  background-color: var(--system-status-success);
+  filter: brightness(0.92);
 }
 
 .btn-danger {
-  background-color: #f43f5e;
-  border-color: #f43f5e;
-  color: #ffffff;
+  background-color: var(--system-status-error);
+  border-color: var(--system-status-error);
+  color: var(--component-button-primary-text);
 }
 .btn-danger:hover:not(:disabled) {
-  background-color: rgba(244, 63, 94, 0.8);
+  background-color: var(--system-status-error);
+  filter: brightness(0.92);
 }
 
 .btn-warning {
-  background-color: #f59e0b;
-  border-color: #f59e0b;
-  color: #ffffff;
+  background-color: var(--system-status-warning);
+  border-color: var(--system-status-warning);
+  color: var(--component-button-primary-text);
 }
 .btn-warning:hover:not(:disabled) {
-  background-color: rgba(245, 158, 11, 0.8);
+  background-color: var(--system-status-warning);
+  filter: brightness(0.92);
 }
 
 .btn-info {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  color: #ffffff;
+  background-color: var(--system-status-info);
+  border-color: var(--system-status-info);
+  color: var(--component-button-primary-text);
 }
 .btn-info:hover:not(:disabled) {
-  background-color: rgba(59, 130, 246, 0.8);
+  background-color: var(--system-status-info);
+  filter: brightness(0.92);
 }
 
 /* Loading state */
-.btn-loading { position: relative; pointer-events: none; }
-.btn-spinner { display: inline-flex; margin-right: 4px; }
-.spinner { width: 16px; height: 16px; animation: btn-spin 600ms linear infinite; }
-.spinner-circle { stroke: currentColor; stroke-dasharray: 45; stroke-dashoffset: 20; }
-.btn-text-loading { opacity: 0.7; }
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+}
+.btn-spinner {
+  display: inline-flex;
+  margin-right: var(--spacing-1);
+}
+.btn-spinner-svg {
+  width: 16px;
+  height: 16px;
+  animation: btn-spin 600ms linear infinite;
+}
+.btn-spinner-circle {
+  stroke: currentColor;
+  stroke-dasharray: 45;
+  stroke-dashoffset: 20;
+}
+.btn-text-loading {
+  opacity: 0.7;
+}
 
 @keyframes btn-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Stories layout helpers */
+.stories-row {
+  display: flex;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+  align-items: center;
 }

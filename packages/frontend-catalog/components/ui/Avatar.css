@@ -1,0 +1,103 @@
+/* Avatar — circular portrait with initials fallback. Token-only. */
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--system-background-muted);
+  color: var(--system-text-primary);
+  border: 1px solid var(--system-border-default);
+  font-family: var(--typography-family-base);
+  font-weight: var(--typography-font-weight-semibold);
+  line-height: 1;
+  overflow: hidden;
+  user-select: none;
+}
+
+.avatar-circle {
+  border-radius: var(--radius-full);
+}
+
+.avatar-square {
+  border-radius: var(--radius-md);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Sizes */
+.avatar-small {
+  width: 24px;
+  height: 24px;
+  font-size: var(--typography-size-xs);
+}
+
+.avatar-medium {
+  width: 40px;
+  height: 40px;
+  font-size: var(--typography-size-sm);
+}
+
+.avatar-large {
+  width: 56px;
+  height: 56px;
+  font-size: var(--typography-size-lg);
+}
+
+.avatar-xlarge {
+  width: 80px;
+  height: 80px;
+  font-size: var(--typography-size-2xl);
+}
+
+/* Status dot */
+.avatar-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 25%;
+  height: 25%;
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--system-background-surface);
+  box-sizing: content-box;
+}
+
+.avatar-square .avatar-status {
+  bottom: -2px;
+  right: -2px;
+}
+
+.avatar-status-online {
+  background-color: var(--system-status-success);
+}
+
+.avatar-status-offline {
+  background-color: var(--system-text-tertiary);
+}
+
+.avatar-status-busy {
+  background-color: var(--system-status-error);
+}
+
+.avatar-status-away {
+  background-color: var(--system-status-warning);
+}

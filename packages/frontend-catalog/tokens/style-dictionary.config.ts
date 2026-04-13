@@ -45,8 +45,9 @@ function resolveReference(
     node = node[segment];
   }
 
-  if (node && typeof node === 'object' && '$value' in node) {
-    return String(node.$value);
+  if (node && typeof node === 'object') {
+    if ('$value' in node) return String((node as any).$value);
+    if ('value' in node) return String((node as any).value);
   }
   return raw;
 }
@@ -61,7 +62,7 @@ StyleDictionary.registerFormat({
 
     for (const token of tokens) {
       const name = `--${token.name}`;
-      const lightValue = String(token.value);
+      const lightValue = String((token as any).$value ?? token.value);
       lightLines.push(`  ${name}: ${lightValue};`);
 
       const darkRaw = extractDarkValue(token);
@@ -88,17 +89,20 @@ StyleDictionary.registerFormat({
 export default {
   source: ['tokens/tokens.w3c.json'],
   log: { verbosity: 'verbose' },
+  preprocessors: ['tokens-studio'],
 
   platforms: {
     css: {
       transformGroup: 'css',
       buildPath: 'dist/',
+      options: { usesDtcg: true },
       files: [
         {
           destination: 'tokens.css',
           format: 'css/variables-with-modes',
           options: {
             outputReferences: false,
+            usesDtcg: true,
           },
         },
       ],
@@ -107,10 +111,12 @@ export default {
     js: {
       transformGroup: 'js',
       buildPath: 'dist/',
+      options: { usesDtcg: true },
       files: [
         {
           destination: 'tokens.js',
           format: 'javascript/es6',
+          options: { usesDtcg: true },
         },
       ],
     },
@@ -118,12 +124,14 @@ export default {
     tailwind: {
       transformGroup: 'js',
       buildPath: 'dist/',
+      options: { usesDtcg: true },
       files: [
         {
           destination: 'tailwind-tokens.js',
           format: 'javascript/es6',
           options: {
             outputReferences: false,
+            usesDtcg: true,
           },
         },
       ],

@@ -1,0 +1,145 @@
+/* CandidateCard — French HR candidate display. Token-only. */
+
+.candidate-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  background-color: var(--component-card-bg);
+  border: 1px solid var(--component-card-border);
+  border-radius: var(--component-card-radius);
+  box-shadow: var(--component-card-shadow);
+  padding: var(--spacing-16);
+  font-family: var(--typography-family-base);
+  color: var(--system-text-primary);
+  transition: var(--transition-fast);
+  max-width: 360px;
+}
+
+.candidate-card:hover {
+  box-shadow: var(--component-card-shadow-hover);
+  border-color: var(--system-border-strong);
+}
+
+.candidate-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+}
+
+.candidate-card-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--system-action-secondary);
+  color: var(--system-text-primary);
+  font-size: var(--typography-size-base);
+  font-weight: var(--typography-font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.candidate-card-identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.candidate-card-name {
+  margin: 0;
+  font-size: var(--typography-size-base);
+  font-weight: var(--typography-font-weight-semibold);
+  line-height: var(--typography-line-height-tight);
+  color: var(--system-text-primary);
+}
+
+.candidate-card-role {
+  margin: 0;
+  font-size: var(--typography-size-sm);
+  color: var(--system-text-secondary);
+  line-height: var(--typography-line-height-tight);
+}
+
+.candidate-card-score {
+  flex-shrink: 0;
+}
+
+.candidate-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  margin: 0;
+}
+
+.candidate-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-8);
+}
+
+.candidate-card-meta-label {
+  font-size: var(--typography-size-xs);
+  color: var(--system-text-tertiary);
+  font-weight: var(--typography-font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.candidate-card-meta-value {
+  font-size: var(--typography-size-sm);
+  color: var(--system-text-primary);
+  font-weight: var(--typography-font-weight-medium);
+  margin: 0;
+}
+
+.candidate-card-contract {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-2) var(--spacing-8);
+  border-radius: var(--radius-full);
+  font-size: var(--typography-size-xs);
+  font-weight: var(--typography-font-weight-semibold);
+  border: 1px solid transparent;
+  background-color: var(--system-background-muted);
+}
+
+.candidate-card-contract-cdi {
+  color: var(--system-contract-cdi);
+  border-color: var(--system-contract-cdi);
+}
+.candidate-card-contract-cdd {
+  color: var(--system-contract-cdd);
+  border-color: var(--system-contract-cdd);
+}
+.candidate-card-contract-cdic {
+  color: var(--system-contract-cdic);
+  border-color: var(--system-contract-cdic);
+}
+.candidate-card-contract-freelance {
+  color: var(--system-contract-freelance);
+  border-color: var(--system-contract-freelance);
+}
+.candidate-card-contract-interim {
+  color: var(--system-contract-interim);
+  border-color: var(--system-contract-interim);
+}
+.candidate-card-contract-portage {
+  color: var(--system-contract-portage);
+  border-color: var(--system-contract-portage);
+}
+.candidate-card-contract-auto {
+  color: var(--system-contract-auto);
+  border-color: var(--system-contract-auto);
+}
+
+.candidate-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--spacing-8);
+  border-top: 1px solid var(--system-border-default);
+}

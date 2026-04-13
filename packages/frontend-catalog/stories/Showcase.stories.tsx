@@ -3,7 +3,7 @@ import type React from 'react';
 import Button from '../components/ui/Button';
 import StatusBadge, {
   FRENCH_LABELS,
-  STATE_COLORS,
+  STATE_TONES as STATE_COLORS,
 } from '../components/ui/StatusBadge';
 import '../dist/tokens.css';
 

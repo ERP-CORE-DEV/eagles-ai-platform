@@ -1,0 +1,71 @@
+/* ScoreBadge — circular score meter. Token-only, light + dark. */
+
+.score-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--typography-family-base);
+}
+
+.score-badge-svg {
+  display: block;
+}
+
+.score-badge-track {
+  stroke: var(--system-border-default);
+}
+
+.score-badge-progress {
+  transition: var(--transition-normal);
+}
+
+.score-badge-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--system-text-primary);
+  pointer-events: none;
+  text-align: center;
+}
+
+.score-badge-value {
+  font-weight: var(--typography-font-weight-bold);
+  line-height: var(--typography-line-height-tight);
+}
+
+.score-badge-label {
+  font-size: var(--typography-size-xs);
+  color: var(--system-text-secondary);
+  font-weight: var(--typography-font-weight-medium);
+  line-height: var(--typography-line-height-tight);
+  margin-top: var(--spacing-1);
+}
+
+/* Sizes */
+.score-badge-font-small .score-badge-value {
+  font-size: var(--typography-size-sm);
+}
+.score-badge-font-medium .score-badge-value {
+  font-size: var(--typography-size-lg);
+}
+.score-badge-font-large .score-badge-value {
+  font-size: var(--typography-size-2xl);
+}
+
+/* Tones — progress stroke */
+.score-badge-error .score-badge-progress {
+  stroke: var(--system-status-error);
+}
+.score-badge-warning .score-badge-progress {
+  stroke: var(--system-status-warning);
+}
+.score-badge-info .score-badge-progress {
+  stroke: var(--system-status-info);
+}
+.score-badge-success .score-badge-progress {
+  stroke: var(--system-status-success);
+}

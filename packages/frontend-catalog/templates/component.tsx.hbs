@@ -1,0 +1,29 @@
+import type { ReactNode } from 'react';
+import './{{NAME}}.css';
+
+export interface {{NAME}}Props {
+  /** {{PROP_DOC}} */
+  className?: string;
+  children?: ReactNode;
+{{PROPS}}
+}
+
+/**
+ * {{NAME}} — {{DESCRIPTION}}
+ *
+ * Token-only styling: light + dark via data-theme="dark".
+ */
+export function {{NAME}}({
+  className = '',
+  children,
+{{PROP_DESTRUCTURE}}
+}: {{NAME}}Props) {
+  const classes = ['{{KEBAB}}', className].filter(Boolean).join(' ');
+  return (
+    <div className={classes}{{EXTRA_PROPS}}>
+      {children}
+    </div>
+  );
+}
+
+export default {{NAME}};
