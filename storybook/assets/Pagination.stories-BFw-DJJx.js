@@ -1,0 +1,29 @@
+import{j as a}from"./jsx-runtime-Z5uAzocK.js";import{r as O}from"./index-pP6CS22B.js";import"./_commonjsHelpers-Cpj98o6Y.js";const d="ellipsis";function h(e,n){const i=n-e+1;return Array.from({length:i},(u,r)=>r+e)}function z(e,n,i){if(i*2+5>=n)return h(1,n);const r=Math.max(e-i,1),g=Math.min(e+i,n),p=r>2,m=g<n-1,P=1,s=n;if(!p&&m){const c=3+2*i;return[...h(1,c),d,s]}if(p&&!m){const c=3+2*i,l=h(n-c+1,n);return[P,d,...l]}const t=h(r,g);return[P,d,...t,d,s]}function v({currentPage:e,totalPages:n,onPageChange:i,siblingCount:u=1,className:r=""}){const g=O.useMemo(()=>z(e,n,u),[e,n,u]),p=["pagination",r].filter(Boolean).join(" "),m=e<=1,P=e>=n,s=t=>{t<1||t>n||t===e||i(t)};return a.jsx("nav",{"aria-label":"Pagination",className:p,children:a.jsxs("ul",{className:"pagination-list",children:[a.jsx("li",{className:"pagination-item",children:a.jsx("button",{type:"button",className:"pagination-button pagination-button-icon","aria-label":"Page précédente",disabled:m,onClick:()=>s(e-1),children:a.jsx("span",{className:"pagination-icon","aria-hidden":"true",children:"‹"})})}),g.map((t,c)=>{if(t===d){const U=`ellipsis-${c}`;return a.jsx("li",{className:"pagination-item",children:a.jsx("span",{className:"pagination-ellipsis","aria-hidden":"true",role:"presentation",children:"…"})},U)}const l=t===e;return a.jsx("li",{className:"pagination-item",children:a.jsx("button",{type:"button",className:["pagination-button",l?"pagination-button-current":""].filter(Boolean).join(" "),"aria-label":`Page ${t}`,"aria-current":l?"page":void 0,onClick:()=>s(t),children:t})},t)}),a.jsx("li",{className:"pagination-item",children:a.jsx("button",{type:"button",className:"pagination-button pagination-button-icon","aria-label":"Page suivante",disabled:P,onClick:()=>s(e+1),children:a.jsx("span",{className:"pagination-icon","aria-hidden":"true",children:"›"})})})]})})}try{v.displayName="Pagination",v.__docgenInfo={description:`Pagination — page navigation control with prev/next + numeric buttons.
+
+Uses smart truncation with sibling count and ellipsis. Prev/Next buttons are
+icon-only with explicit aria-label. The current page button uses
+aria-current="page".`,displayName:"Pagination",props:{currentPage:{defaultValue:null,description:"Current page (1-indexed)",name:"currentPage",required:!0,type:{name:"number"}},totalPages:{defaultValue:null,description:"Total number of pages",name:"totalPages",required:!0,type:{name:"number"}},onPageChange:{defaultValue:null,description:"Page change handler",name:"onPageChange",required:!0,type:{name:"(page: number) => void"}},siblingCount:{defaultValue:{value:"1"},description:"Number of sibling pages to show on each side of the current page",name:"siblingCount",required:!1,type:{name:"number"}},className:{defaultValue:{value:""},description:"Additional CSS class names",name:"className",required:!1,type:{name:"string"}}}}}catch{}const K={title:"Navigation/Pagination",component:v,parameters:{layout:"padded",docs:{description:{component:'Page navigation with smart truncation, prev/next icon buttons, and aria-current="page" on the active page.'}}},tags:["autodocs"]};function o(e){const[n,i]=O.useState(e.initialPage??1);return a.jsx(v,{currentPage:n,totalPages:e.totalPages,onPageChange:i,siblingCount:e.siblingCount})}const f={render:()=>a.jsx(o,{totalPages:10,initialPage:1})},b={render:()=>a.jsx(o,{totalPages:20,initialPage:10})},x={render:()=>a.jsx(o,{totalPages:15,initialPage:15})},j={render:()=>a.jsx(o,{totalPages:3,initialPage:2})},y={render:()=>a.jsx(o,{totalPages:100,initialPage:50,siblingCount:2})},N={render:()=>a.jsx(o,{totalPages:10,initialPage:3}),parameters:{backgrounds:{default:"dark"},theme:"dark"},decorators:[e=>(typeof document<"u"&&document.documentElement.setAttribute("data-theme","dark"),a.jsx(e,{}))]};var S,k,I;f.parameters={...f.parameters,docs:{...(S=f.parameters)==null?void 0:S.docs,source:{originalSource:`{
+  render: () => <InteractivePagination totalPages={10} initialPage={1} />
+}`,...(I=(k=f.parameters)==null?void 0:k.docs)==null?void 0:I.source}}};var C,_,w;b.parameters={...b.parameters,docs:{...(C=b.parameters)==null?void 0:C.docs,source:{originalSource:`{
+  render: () => <InteractivePagination totalPages={20} initialPage={10} />
+}`,...(w=(_=b.parameters)==null?void 0:_.docs)==null?void 0:w.source}}};var M,E,L;x.parameters={...x.parameters,docs:{...(M=x.parameters)==null?void 0:M.docs,source:{originalSource:`{
+  render: () => <InteractivePagination totalPages={15} initialPage={15} />
+}`,...(L=(E=x.parameters)==null?void 0:E.docs)==null?void 0:L.source}}};var R,q,V;j.parameters={...j.parameters,docs:{...(R=j.parameters)==null?void 0:R.docs,source:{originalSource:`{
+  render: () => <InteractivePagination totalPages={3} initialPage={2} />
+}`,...(V=(q=j.parameters)==null?void 0:q.docs)==null?void 0:V.source}}};var A,D,F;y.parameters={...y.parameters,docs:{...(A=y.parameters)==null?void 0:A.docs,source:{originalSource:`{
+  render: () => <InteractivePagination totalPages={100} initialPage={50} siblingCount={2} />
+}`,...(F=(D=y.parameters)==null?void 0:D.docs)==null?void 0:F.source}}};var T,B,$;N.parameters={...N.parameters,docs:{...(T=N.parameters)==null?void 0:T.docs,source:{originalSource:`{
+  render: () => <InteractivePagination totalPages={10} initialPage={3} />,
+  parameters: {
+    backgrounds: {
+      default: 'dark'
+    },
+    theme: 'dark'
+  },
+  decorators: [Story => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+    return <Story />;
+  }]
+}`,...($=(B=N.parameters)==null?void 0:B.docs)==null?void 0:$.source}}};const Q=["Default","Middle","LastPage","FewPages","ManyPages","DarkMode"];export{N as DarkMode,f as Default,j as FewPages,x as LastPage,y as ManyPages,b as Middle,Q as __namedExportsOrder,K as default};

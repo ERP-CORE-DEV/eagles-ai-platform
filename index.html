@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EAGLES AI Platform — Frontend Catalog</title>
+  <meta name="description" content="The first AI-queryable design system. 48 production-gated React components, 12 MCP intelligence tools, 8 cross-system design references. Built for LLM agents that scaffold real apps." />
+  <link rel="stylesheet" href="./tokens.css" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: var(--typography-family-base); color: var(--system-text-primary); background: var(--system-background-surface); -webkit-font-smoothing: antialiased; }
+    main { max-width: 1100px; margin: 0 auto; padding: var(--spacing-32) var(--spacing-20); }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-32); }
+    .brand { display: flex; align-items: center; gap: var(--spacing-8); font-weight: var(--typography-font-weight-semibold); font-size: var(--typography-size-lg); }
+    .brand-mark { width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--system-status-info); display: inline-block; }
+    nav a { color: var(--system-text-secondary); text-decoration: none; margin-left: var(--spacing-16); font-size: var(--typography-size-sm); }
+    nav a:hover { color: var(--system-text-primary); }
+    h1 { font-size: 56px; line-height: 1.1; margin: 0 0 var(--spacing-16); font-weight: var(--typography-font-weight-bold); letter-spacing: -0.02em; }
+    .tagline { font-size: var(--typography-size-xl); color: var(--system-text-secondary); max-width: 720px; margin: 0 0 var(--spacing-32); line-height: 1.5; }
+    .cta-row { display: flex; gap: var(--spacing-12); flex-wrap: wrap; margin-bottom: var(--spacing-40); }
+    .btn { display: inline-flex; align-items: center; gap: var(--spacing-4); padding: var(--spacing-12) var(--spacing-20); border-radius: var(--radius-md); font-family: inherit; font-size: var(--typography-size-base); font-weight: var(--typography-font-weight-medium); text-decoration: none; border: 1px solid transparent; cursor: pointer; transition: var(--transition-fast); }
+    .btn-primary { background: var(--component-button-primary-bg); color: var(--component-button-primary-text); border-color: var(--component-button-primary-bg); }
+    .btn-primary:hover { background: var(--component-button-primary-bg-hover); }
+    .btn-secondary { background: var(--component-button-secondary-bg); color: var(--component-button-secondary-text); border-color: var(--system-border-default); }
+    .btn-secondary:hover { border-color: var(--system-border-focus); }
+    .pills { display: flex; gap: var(--spacing-8); flex-wrap: wrap; margin-bottom: var(--spacing-40); }
+    .pill { display: inline-flex; align-items: center; gap: var(--spacing-4); padding: var(--spacing-4) var(--spacing-12); border-radius: var(--radius-full); font-size: var(--typography-size-xs); font-weight: var(--typography-font-weight-medium); background: var(--system-background-muted); color: var(--system-text-secondary); border: 1px solid var(--system-border-default); }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--system-status-success); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-20); margin: var(--spacing-40) 0; }
+    .card { padding: var(--spacing-24); border-radius: var(--radius-lg); background: var(--system-background-surface); border: 1px solid var(--system-border-default); transition: var(--transition-fast); }
+    .card:hover { border-color: var(--system-border-focus); transform: translateY(-2px); }
+    .card h3 { margin: 0 0 var(--spacing-8); font-size: var(--typography-size-lg); font-weight: var(--typography-font-weight-semibold); }
+    .card p { margin: 0; color: var(--system-text-secondary); font-size: var(--typography-size-sm); line-height: 1.6; }
+    .card-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: var(--spacing-16); }
+    .card-icon-breadth { background: var(--system-status-info); color: var(--component-button-primary-text); }
+    .card-icon-intel { background: var(--system-status-success); color: var(--component-button-primary-text); }
+    .card-icon-compare { background: var(--system-status-warning); color: var(--component-button-primary-text); }
+    section.demo { padding: var(--spacing-32); background: var(--system-background-muted); border-radius: var(--radius-lg); border: 1px solid var(--system-border-default); margin: var(--spacing-40) 0; }
+    section.demo h2 { margin: 0 0 var(--spacing-16); font-size: var(--typography-size-2xl); }
+    pre { background: var(--system-background-surface); padding: var(--spacing-16); border-radius: var(--radius-md); border: 1px solid var(--system-border-default); overflow-x: auto; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: var(--typography-size-sm); line-height: 1.6; color: var(--system-text-primary); }
+    .tools-table { width: 100%; border-collapse: collapse; margin: var(--spacing-20) 0; }
+    .tools-table th, .tools-table td { text-align: left; padding: var(--spacing-12); border-bottom: 1px solid var(--system-border-default); font-size: var(--typography-size-sm); }
+    .tools-table th { color: var(--system-text-secondary); font-weight: var(--typography-font-weight-medium); text-transform: uppercase; letter-spacing: 0.04em; font-size: var(--typography-size-xs); }
+    .tools-table code { font-family: ui-monospace, Menlo, monospace; font-size: var(--typography-size-xs); background: var(--system-background-muted); padding: 2px 6px; border-radius: var(--radius-sm); }
+    .roadmap ul { list-style: none; padding: 0; margin: var(--spacing-16) 0; }
+    .roadmap li { padding: var(--spacing-8) 0; color: var(--system-text-secondary); font-size: var(--typography-size-sm); border-bottom: 1px solid var(--system-border-default); }
+    .roadmap li::before { content: "→ "; color: var(--system-status-info); font-weight: bold; }
+    footer { margin-top: var(--spacing-40); padding-top: var(--spacing-24); border-top: 1px solid var(--system-border-default); color: var(--system-text-tertiary); font-size: var(--typography-size-xs); text-align: center; }
+    .stat-row { display: flex; gap: var(--spacing-32); margin: var(--spacing-32) 0; flex-wrap: wrap; }
+    .stat { flex: 1; min-width: 140px; }
+    .stat-value { font-size: 40px; font-weight: var(--typography-font-weight-bold); color: var(--system-text-primary); line-height: 1; }
+    .stat-label { font-size: var(--typography-size-xs); color: var(--system-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-top: var(--spacing-4); }
+    @media (prefers-color-scheme: dark) { html { background: #0a0a0a; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand"><span class="brand-mark"></span>EAGLES AI Platform</div>
+      <nav>
+        <a href="./storybook/">Storybook</a>
+        <a href="#tools">MCP Tools</a>
+        <a href="#demo">Demo</a>
+      </nav>
+    </header>
+
+    <h1>The first AI-queryable<br />design system.</h1>
+    <p class="tagline">48 production-gated React components. 12 MCP intelligence tools. 8 cross-system design references. Built for the LLM agents that scaffold real apps — not the humans that browse design sites.</p>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="./storybook/">Open Storybook →</a>
+      <a class="btn btn-secondary" href="#demo">See the demo</a>
+    </div>
+
+    <div class="pills">
+      <span class="pill"><span class="pill-dot"></span>Alpha 1.0</span>
+      <span class="pill">Token-only CSS</span>
+      <span class="pill">Light + Dark parity</span>
+      <span class="pill">W3C DTCG tokens</span>
+      <span class="pill">French HR domain</span>
+      <span class="pill">MIT licensed</span>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="stat-value">48</div><div class="stat-label">Components</div></div>
+      <div class="stat"><div class="stat-value">12</div><div class="stat-label">MCP tools</div></div>
+      <div class="stat"><div class="stat-value">8</div><div class="stat-label">Design systems</div></div>
+      <div class="stat"><div class="stat-value">515</div><div class="stat-label">External tokens</div></div>
+      <div class="stat"><div class="stat-value">0</div><div class="stat-label">Gate findings</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon card-icon-breadth">▦</div>
+        <h3>Breadth</h3>
+        <p>48 components across layout, data, forms, feedback, navigation, and ERP. Every one token-only, light + dark via <code>data-theme="dark"</code>, gate-enforced at commit.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon card-icon-intel">◉</div>
+        <h3>Intelligence</h3>
+        <p>A catalog LLMs query, not a site humans browse. 12 MCP tools let agents search components, audit snippets, generate from specs, and preview token overrides.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon card-icon-compare">⇄</div>
+        <h3>Comparison</h3>
+        <p>Cross-reference against Carbon, Primer, Spectrum, Material 3, Fluent, Ant, Chakra, and shadcn/ui — 515 external tokens, 235 external components, all canonicalized.</p>
+      </div>
+    </div>
+
+    <section class="demo" id="tools">
+      <h2>MCP intelligence layer</h2>
+      <p style="color: var(--system-text-secondary); font-size: var(--typography-size-sm);">The <code>frontend-catalog-mcp</code> server exposes 12 tools over stdio. Any Claude Code or MCP-compatible client can query the catalog at runtime.</p>
+      <table class="tools-table">
+        <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>catalog_search_pattern</code></td><td>Fuzzy search over the component manifest by free-form query.</td></tr>
+          <tr><td><code>catalog_component_metadata</code></td><td>Exact lookup: file, tokens used, story parity.</td></tr>
+          <tr><td><code>catalog_audit_a11y</code></td><td>Run the gate regex pack against an arbitrary TSX snippet.</td></tr>
+          <tr><td><code>catalog_compare_systems</code></td><td>Canonicalized comparison against 8 external systems.</td></tr>
+          <tr><td><code>catalog_generate_from_spec</code></td><td>Template substitution from a validated component spec.</td></tr>
+          <tr><td><code>catalog_token_playground</code></td><td>Apply token overrides, return diff + regenerated CSS.</td></tr>
+          <tr><td><code>catalog_list_tokens</code></td><td>Structured dump of all W3C design tokens.</td></tr>
+          <tr><td><code>catalog_suggest_token</code></td><td>Semantic role → token lookup.</td></tr>
+          <tr><td><code>catalog_get_component</code></td><td>Source read by name.</td></tr>
+          <tr><td><code>catalog_get_baseline</code></td><td>Baseline layer (BASELINE-L1..L8) markdown.</td></tr>
+          <tr><td><code>catalog_get_adr_decision</code></td><td>ADR decision lookup by number.</td></tr>
+          <tr><td><code>catalog_lint_snippet</code></td><td>Find raw color literals and suggest replacements.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="demo" id="demo">
+      <h2>Demo — an LLM scaffolds a dashboard</h2>
+      <pre><code>$ claude mcp list
+frontend-catalog: stdio @eagles-ai-platform/frontend-catalog-mcp
+
+&gt; Scaffold me a recruitment dashboard using the EAGLES catalog.
+
+• catalog_search_pattern({ query: "dashboard" })
+  → 48 candidates ranked. Top: KanbanBoard, DataTable, Stat, MetricCard.
+
+• catalog_component_metadata({ name: "KanbanBoard" })
+  → 29 tokens, has CSS, has Story. Safe to import.
+
+• catalog_compare_systems({ target: "component", name: "DataTable" })
+  → 8/8 systems cover DataTable. EAGLES ships its own, gate-clean.
+
+• catalog_generate_from_spec({ name: "RecruitmentHeader", category: "layout", ... })
+  → 3 files emitted, token-compliant, DarkMode story included.
+
+Dashboard scaffolded. All components gate-pass. Light + dark ready.</code></pre>
+    </section>
+
+    <section class="roadmap">
+      <h2>Q2 2026 roadmap</h2>
+      <ul>
+        <li>Live <code>token_playground</code> sandbox rendering in Storybook iframe</li>
+        <li>Chromatic visual regression baselines across all 48 components</li>
+        <li>APCA + axe automated accessibility checks per component</li>
+        <li>Figma bidirectional token sync plugin</li>
+        <li>Multi-framework export: Vue, Svelte, Web Components</li>
+        <li>Full Polaris, Radix, and Mantine ingestion</li>
+        <li>AI component generation from Figma screenshots</li>
+      </ul>
+    </section>
+
+    <footer>
+      EAGLES AI Platform — Frontend Catalog v1.0 Alpha · Built in one night · MIT licensed
+    </footer>
+  </main>
+</body>
+</html>
