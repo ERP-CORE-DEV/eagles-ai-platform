@@ -450,18 +450,33 @@ export function createFrontendCatalogServer(): McpServer {
             if (m) findings.push({ rule: f.rule, line: i + 1, evidence: m[0] });
           }
         }
-        const iconButtonRe = /<button[^>]*>\s*<svg[^>]*>[\s\S]*?<\/svg>\s*<\/button>/g;
+        const iconButtonRe = /<button[^>]*>\s*<(svg|img|Icon)/g;
         let mm: RegExpExecArray | null;
         while ((mm = iconButtonRe.exec(snippet)) !== null) {
-          if (!/aria-label\s*=/.test(mm[0])) {
+          const slice = snippet.slice(Math.max(0, mm.index - 300), mm.index + mm[0].length);
+          if (!/aria-label\s*=/.test(slice)) {
             const line = snippet.slice(0, mm.index).split(/\r?\n/).length;
             findings.push({ rule: "icon-button-needs-aria-label", line, evidence: mm[0].slice(0, 60) });
           }
         }
-        const divClickRe = /<div[^>]*\sonClick\s*=/;
-        if (divClickRe.test(snippet)) {
-          const line = snippet.slice(0, snippet.search(divClickRe)).split(/\r?\n/).length;
-          findings.push({ rule: "no-div-onclick", line, evidence: "<div onClick=..." });
+        const inputRe = /<input(?![^>]*type\s*=\s*["'](?:hidden|submit|button|reset)["'])[^>]*>/g;
+        let im: RegExpExecArray | null;
+        while ((im = inputRe.exec(snippet)) !== null) {
+          const match = im[0];
+          if (
+            !/aria-label\s*=/.test(match) &&
+            !/aria-labelledby\s*=/.test(match) &&
+            !/\bid\s*=/.test(match)
+          ) {
+            const line = snippet.slice(0, im.index).split(/\r?\n/).length;
+            findings.push({ rule: "input-needs-label", line, evidence: match.slice(0, 60) });
+          }
+        }
+        const divClickRe = /<div[^>]*\sonClick\s*=/g;
+        let dm: RegExpExecArray | null;
+        while ((dm = divClickRe.exec(snippet)) !== null) {
+          const line = snippet.slice(0, dm.index).split(/\r?\n/).length;
+          findings.push({ rule: "no-div-onclick", line, evidence: dm[0].slice(0, 60) });
         }
         return text({
           findings,
