@@ -32,7 +32,7 @@ describe("orchestrator-mcp integration", () => {
     client = await makeClient(dbDir);
   });
 
-  it("should list all 19 tools", async () => {
+  it("should list all 20 tools", async () => {
     const result = await client.listTools();
     const toolNames = result.tools.map((t) => t.name);
 
@@ -52,10 +52,11 @@ describe("orchestrator-mcp integration", () => {
     expect(toolNames).toContain("task_build_decomposition_prompt");
     expect(toolNames).toContain("task_apply_decomposition");
     expect(toolNames).toContain("mission_start");
+    expect(toolNames).toContain("mission_telemetry_get");
     expect(toolNames).toContain("session_search");
     expect(toolNames).toContain("session_extract");
     expect(toolNames).toContain("mission_execute");
-    expect(toolNames).toHaveLength(19);
+    expect(toolNames).toHaveLength(20);
   });
 
   it("agent lifecycle: register → heartbeat → discover", async () => {

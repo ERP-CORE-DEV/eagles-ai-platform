@@ -8,6 +8,8 @@ import { TaskStore } from "@eagles-ai-platform/data-layer";
 import { SonaLearningStore } from "@eagles-ai-platform/data-layer";
 import { EventBus } from "@eagles-ai-platform/data-layer";
 import { SessionIndexStore } from "@eagles-ai-platform/data-layer";
+import { MissionTelemetryStore } from "@eagles-ai-platform/data-layer";
+import type { MissionTelemetryRecord } from "@eagles-ai-platform/data-layer";
 import { computeHealth } from "./agents/lifecycle.js";
 import { findBestAgent } from "./tasks/coordination.js";
 import { MessageBus } from "./messaging/MessageBus.js";
@@ -97,6 +99,7 @@ export function createOrchestratorServer(dbDir?: string): McpServer {
   const sona = new SonaLearningStore(join(dir, "learning.sqlite"));
   const messagingEventBus = new EventBus(join(dir, "messaging.sqlite"));
   const messageBus = new MessageBus(messagingEventBus);
+  const telemetry = new MissionTelemetryStore(join(dir, "mission-telemetry.sqlite"));
   const server = new McpServer({ name: "orchestrator-mcp", version: "0.1.0" });
 
   // -------------------------------------------------------------------------
@@ -700,10 +703,94 @@ export function createOrchestratorServer(dbDir?: string): McpServer {
     },
     async (params) => {
       const result = await missionStart(params.input, { cwd: params.cwd });
+
+      // Telemetry: detect lifecycle violations from the previous mission on this
+      // project BEFORE overwriting the snapshot with the new one.
+      if (result.status === "mission_started" && result.mission !== undefined) {
+        const mission = result.mission;
+        try {
+          const prior = telemetry.getLatestSnapshot(mission.project);
+          if (prior !== null) {
+            const taskCount = engine.countCreatedAfter(prior.startedAt);
+            if (taskCount === 0) {
+              telemetry.recordViolation({
+                missionId: prior.missionId,
+                project: prior.project,
+                goal: prior.goal,
+                confidence: prior.confidence,
+                taskCountAtCheck: taskCount,
+                decompositionSuggested: prior.decompositionSuggested,
+                violationType: "mission_start_without_task_create",
+              });
+            } else if (taskCount < prior.decompositionSuggested) {
+              telemetry.recordViolation({
+                missionId: prior.missionId,
+                project: prior.project,
+                goal: prior.goal,
+                confidence: prior.confidence,
+                taskCountAtCheck: taskCount,
+                decompositionSuggested: prior.decompositionSuggested,
+                violationType: "mission_start_below_decomposition_threshold",
+              });
+            }
+          }
+          // Record the new snapshot for the next mission_start to check.
+          telemetry.recordMissionStart({
+            project: mission.project,
+            goal: mission.goal,
+            confidence: mission.confidence,
+            decompositionSuggested: mission.dag.taskCount,
+          });
+        } catch {
+          // Telemetry must never break mission_start. Fail-open.
+        }
+      }
+
       return {
         content: [{
           type: "text" as const,
           text: JSON.stringify(result, null, 2),
+        }],
+      };
+    },
+  );
+
+  // -------------------------------------------------------------------------
+  // mission_telemetry_get
+  // -------------------------------------------------------------------------
+  server.tool(
+    "mission_telemetry_get",
+    {
+      project: z.string().optional().describe("Filter violations by project name"),
+      resolved: z.boolean().optional().describe("Filter by resolved status"),
+      limit: z.number().int().positive().optional().describe("Max rows to return (default 100)"),
+    },
+    async (params) => {
+      const counters = telemetry.counters();
+      const violations = telemetry.listViolations({
+        project: params.project,
+        resolved: params.resolved,
+        limit: params.limit,
+      });
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            counters,
+            violations: violations.map((v: MissionTelemetryRecord) => ({
+              missionId: v.missionId,
+              project: v.project,
+              goal: v.goal,
+              confidence: v.confidence,
+              violationType: v.violationType,
+              taskCountAtCheck: v.taskCountAtCheck,
+              decompositionSuggested: v.decompositionSuggested,
+              resolved: v.resolved,
+              detectedAt: v.detectedAt,
+            })),
+            total: violations.length,
+          }, null, 2),
         }],
       };
     },

@@ -16,3 +16,9 @@ export { ToolRegistryStore } from "./ToolRegistryStore.js";
 export type { StoredTool } from "./ToolRegistryStore.js";
 export { SessionIndexStore } from "./SessionIndexStore.js";
 export type { SessionIndexEntry, ExtractedMessage } from "./SessionIndexStore.js";
+export { MissionTelemetryStore } from "./MissionTelemetryStore.js";
+export type {
+  MissionTelemetryRecord,
+  MissionSnapshot,
+  ViolationType,
+} from "./MissionTelemetryStore.js";

@@ -262,6 +262,13 @@ export class TaskStore {
     return row.cnt;
   }
 
+  countCreatedAfter(isoTime: string): number {
+    const row = this.db.prepare(
+      "SELECT COUNT(*) as cnt FROM tasks WHERE created_at > ?",
+    ).get(isoTime) as { cnt: number };
+    return row.cnt;
+  }
+
   close(): void {
     this.db.close();
   }
